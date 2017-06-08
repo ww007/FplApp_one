@@ -1,0 +1,120 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/LinearLayout1"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context="com.ww.gridviewdemo.activity.Run50Activity" >
+
+    <TextView
+        android:id="@+id/tv_title_run"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="#3f51b5"
+        android:gravity="center"
+        android:text="50米跑"
+        android:textColor="#ffffff"
+        android:textSize="20sp" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#FF909090" />
+
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:text="00:00.0"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textSize="40sp" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#FF909090" />
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="4" >
+
+        <Button
+            android:id="@+id/btn_quit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentLeft="true"
+            android:layout_marginBottom="60dp"
+            android:layout_marginLeft="30dp"
+            android:background="@drawable/circle_corner_button_selector"
+            android:text="退出"
+            android:textColor="#ffffff" />
+
+        <Button
+            android:id="@+id/btn_start"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@+id/btn_quit"
+            android:layout_alignBottom="@+id/btn_quit"
+            android:layout_alignParentRight="true"
+            android:layout_marginRight="30dp"
+            android:background="@drawable/circle_corner_button_selector"
+            android:text="开始"
+            android:textColor="#ffffff" />
+
+        <TextView
+            android:id="@+id/tv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignLeft="@+id/btn_start"
+            android:layout_alignRight="@+id/btn_start"
+            android:layout_below="@+id/btn_start"
+            android:layout_marginTop="3dp"
+            android:gravity="center"
+            android:text="【   +   】" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@+id/tv"
+            android:layout_alignLeft="@+id/btn_quit"
+            android:layout_alignRight="@+id/btn_quit"
+            android:gravity="center"
+            android:text="【   ↰   】" />
+
+        <TextView
+            android:id="@+id/tv_run"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:gravity="center"
+            android:text="请  刷  卡"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+
+        <Button
+            android:id="@+id/btn_run_scanCode"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:background="@drawable/btn_scancode"
+            android:text="扫码"
+            android:textColor="#ffffff"
+            android:textSize="16sp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/textView1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_above="@+id/tv_run"
+            android:layout_marginBottom="20dp"
+            android:gravity="center"
+            android:text="进入手工成绩输入"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+    </RelativeLayout>
+
+</LinearLayout>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<item>
+    <!--默认属性页起始块号-->
+    <property blockNo="4" />
+	<!-- 1,2为学生信息，60,61,62为扩展信息 -->
+	<stuBlockNo>
+	    <blockNo num="1"/>
+	    <blockNo num="2"/>
+	    <blockNo num="60"/>
+	    <blockNo num="61"/>
+	    <blockNo num="62"/>
+	</stuBlockNo>
+	<!-- 项目元素 -->
+	<element code="1" name="身高、体重" blockNum="1" />
+	<element code="2" name="肺活量" blockNum="2" />
+	<element code="3" name="立定跳远" blockNum="2" />
+	<element code="4" name="摸高" blockNum="2" />
+	<element code="5" name="俯卧撑" blockNum="1" />
+	<element code="6" name="仰卧起坐" blockNum="1" />
+	<element code="7" name="坐位体前屈" blockNum="2" />
+	<element code="8" name="跳绳" blockNum="1" />
+	<element code="9" name="视力" blockNum="1" />
+	<element code="10" name="引体向上" blockNum="1" />
+	<element code="11" name="红外实心球" blockNum="2" />
+	<element code="12" name="中长跑（800,1000）" blockNum="1" />
+	<element code="13" name="排球" blockNum="1" />
+	<element code="14" name="篮球运球" blockNum="1" />
+	<element code="15" name="折返跑" blockNum="1" />
+	<element code="16" name="1500米健步走" blockNum="1" />
+	<element code="17" name="2000米健步走" blockNum="1" />
+	<element code="18" name="50米" blockNum="1" />
+	<element code="19" name="足球运球" blockNum="1" />
+	<element code="20" name="踢毽子" blockNum="1" />
+	<element code="21" name="游泳" blockNum="1" />
+</item>

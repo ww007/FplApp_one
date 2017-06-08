@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <color name="progressColorGreen">#66FF33</color>
+    <color name="scan_bg">#7f000000</color>
+    <color name="fragment">#303f9f</color>
+    <color name="gray">#cccccc</color>
+    <color name="gray1">#eeeeee</color>
+
+</resources>

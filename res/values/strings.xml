@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<resources>
+    <string name="app_name">FplApp</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="title_activity_project_selection">ProjectSelectionActivity</string>
+    <string name="title_activity_online">OnlineActivity</string>
+    <string name="title_activity_icinformation">ICInformationActivity</string>
+    <string name="title_activity_system_management">SystemManagementActivity</string>
+    <string name="title_activity_help">HelpActivity</string>
+    <string name="title_activity_run50">Run50Activity</string>
+    <string name="title_activity_run800">Run800Activity</string>
+    <string name="title_activity_run_metering">RunMeteringActivity</string>
+    <string name="title_activity_run_grade">RunGradeActivity</string>
+    <string name="title_activity_height_and_weight">HeightAndWeightActivity</string>
+    <string name="title_activity_vital_capacity">VitalCapacityActivity</string>
+    <string name="title_activity_base">BaseActivity</string>
+    <string name="onlineTitle">计算机联机</string>
+    <string name="onlineText">数据发送前请确认WIFI连接成功</string>
+    <string name="fpl">菲普莱体育</string>
+    <string name="btnReturn">返回</string>
+    <string name="btnSend">上传</string>
+    <string name="perInfo">个人信息</string>
+    <string name="HeiWei">身高体重</string>
+    <string name="name">姓名：</string>
+    <string name="gender">性别：</string>
+    <string name="number">学号：</string>
+    <string name="range">输入范围：</string>
+    <string name="min">最小值</string>
+    <string name="max">最大值</string>
+    <string name="scan_allcode_title">条形码扫描</string>
+    <string name="scan_allcode_hint">将条形码对入取景框，即可自动扫描</string>
+    <string name="title_activity_run_grade_input">RunGradeInputActivity</string>
+    <string name="title_activity_project_manage">ProjectManageActivity</string>
+    <string name="title_activity_splash_screen">SplashScreenActivity</string>
+    <string name="title_activity_project_mana">ProjectManaActivity</string>
+    <string name="title_activity_project_manager">ProjectManagerActivity</string>
+    <string name="title_activity_fragment_left">FragmentLeftActivity</string>
+    <string name="title_activity_fragment_right">FragmentRightActivity</string>
+    <string name="title_activity_shuttle_run">ShuttleRunActivity</string>
+    <string name="title_activity_sharedpreferences">SharedpreferencesActivity</string>
+    <string name="title_activity_abount_self">AbountSelfActivity</string>
+</resources>
