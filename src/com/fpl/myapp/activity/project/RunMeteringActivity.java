@@ -15,6 +15,8 @@ import android.os.Handler;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -53,6 +55,8 @@ public class RunMeteringActivity extends ListActivity implements OnClickListener
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		Window window = getWindow();
+		window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 		setContentView(R.layout.activity_run_metering);
 		// 记录开始的时间ms数
 		startTime = System.currentTimeMillis();
@@ -114,7 +118,7 @@ public class RunMeteringActivity extends ListActivity implements OnClickListener
 	 * 重置
 	 */
 	private void reset() {
-		new AlertDialog.Builder(this).setTitle("确认").setMessage("是否重置？")
+		new AlertDialog.Builder(this).setTitle("确认").setMessage("将退出当前计时界面，是否重置？")
 				.setPositiveButton("取消", new DialogInterface.OnClickListener() {
 
 					@Override
@@ -220,7 +224,30 @@ public class RunMeteringActivity extends ListActivity implements OnClickListener
 	 */
 	public String getDeltaT() {
 		timeUsedInsec = System.currentTimeMillis() - startTime;
-		String string = getMin() + ":" + getSec() + "." + getLongMill();
+		min = (int) ((timeUsedInsec) / 60000);
+		sec = (int) ((timeUsedInsec - min * 60000) / 1000);
+		longmill = (int) (timeUsedInsec - min * 60000 - sec * 1000);
+		String string = "";
+		if (longmill < 991 && longmill > 90) {
+			if (longmill % 10 == 0) {
+				string = getMin(0) + ":" + getSec(0) + "." + longmill / 10;
+			} else {
+				string = getMin(0) + ":" + getSec(0) + "." + (longmill / 10 + 1);
+			}
+		} else if (longmill < 91) {
+			if (longmill % 10 == 0) {
+				string = getMin(0) + ":" + getSec(0) + "." + "0" + longmill / 10;
+			} else {
+				string = getMin(0) + ":" + getSec(0) + "." + "0" + (longmill / 10 + 1);
+			}
+		} else {
+			if (sec < 59) {
+				string = getMin(0) + ":" + getSec(1) + "." + "00";
+			} else {
+				string = getMin(1) + ":" + "00" + "." + "00";
+			}
+		}
+		// string = getMin() + ":" + getSec() + "." + getLongMill(1);
 		return string;
 	}
 
@@ -232,26 +259,54 @@ public class RunMeteringActivity extends ListActivity implements OnClickListener
 		tvTime.setText(getDeltaT());
 	}
 
-	public String getMin() {
-
-		min = (int) ((timeUsedInsec) / 60000);
-		return min < 10 ? "0" + min : min + "";
+	public String getMin(int n) {
+		// min = (int) ((timeUsedInsec) / 60000) + n;
+		return (min + n) < 10 ? "0" + (min + n) : (min + n) + "";
 	}
 
-	public String getSec() {
-		sec = (int) ((timeUsedInsec - min * 60000) / 1000);
-		return sec < 10 ? "0" + sec : sec + "";
+	public String getSec(int n) {
+		// sec = (int) ((timeUsedInsec - min * 60000) / 1000) + n;
+		return (sec + n) < 10 ? "0" + (sec + n) : (sec + n) + "";
 	}
 
-	public String getLongMill() {
+	public String getLongMill(int flag) {
 		longmill = (int) (timeUsedInsec - min * 60000 - sec * 1000);
-		if (longmill < 10) {
-			return "00" + longmill;
-		} else if (longmill < 100) {
-			return "0" + longmill;
-		} else {
-			return longmill + "";
+		String result = "";
+		switch (flag) {
+		case 1:
+			if (longmill % 10 == 0) {
+				if (longmill / 10 < 10) {
+					result = "0" + longmill / 10;
+				} else {
+					result = "" + longmill / 10;
+				}
+			} else {
+				result = "" + longmill / 10 + 1;
+			}
+			break;
+		case 2:
+			if (longmill % 100 < 10) {
+				result = longmill / 100 + "";
+			} else {
+				if (longmill > 909) {
+					result = "0";
+				} else {
+					result = longmill / 100 + 1 + "";
+				}
+
+			}
+			break;
+		default:
+			break;
 		}
+		// if (longmill < 10) {
+		// return "00" + longmill;
+		// } else if (longmill < 100) {
+		// return "0" + longmill;
+		// } else {
+		// return longmill + "";
+		// }
+		return result;
 	}
 
 }

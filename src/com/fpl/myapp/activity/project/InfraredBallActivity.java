@@ -10,6 +10,7 @@ import com.fpl.myapp.base.NFCActivity;
 import com.fpl.myapp.db.DbService;
 import com.fpl.myapp.db.SaveDBUtil;
 import com.fpl.myapp.util.Constant;
+import com.fpl.myapp.util.HttpUtil;
 import com.fpl.myapp.util.NetUtil;
 import com.wnb.android.nfc.dataobject.entity.IC_ItemResult;
 import com.wnb.android.nfc.dataobject.entity.IC_Result;
@@ -43,7 +44,6 @@ public class InfraredBallActivity extends NFCActivity {
 	private TextView tvInfoTitle;
 	private TextView tvName;
 	private TextView tvGender;
-	private TextView tvNumber;
 	private TextView tvShow1;
 	private TextView tvShow;
 	private EditText etChengji;
@@ -96,7 +96,7 @@ public class InfraredBallActivity extends NFCActivity {
 				etChengji.setEnabled(false);
 				break;
 			case 3:
-				NetUtil.showToast(context, "请先下载相关数据");
+				NetUtil.showToast(context, "当前卡片无此项目");
 				rb0.setEnabled(false);
 				rb1.setEnabled(false);
 				rb2.setEnabled(false);
@@ -104,17 +104,25 @@ public class InfraredBallActivity extends NFCActivity {
 				tvShow.setText("请刷卡");
 				etChengji.setEnabled(false);
 				break;
+			case 4:
+				NetUtil.showToast(context, "条码识别不出，请手动输入");
+				break;
 			default:
 				break;
 			}
 		};
 	};
+	private IC_ItemResult item;
+	private Button btnGetStu;
+	private EditText tvNumber;
+	public static Activity mActivity;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.personal_information);
 		context = this;
+		mActivity = this;
 
 		mSharedPreferences = getSharedPreferences("readStyles", Activity.MODE_PRIVATE);
 		readStyle = mSharedPreferences.getInt("readStyle", 0);
@@ -123,8 +131,10 @@ public class InfraredBallActivity extends NFCActivity {
 		if (stuData != null && stuData.length() != 0) {
 			stuByCode = DbService.getInstance(context).queryStudentByCode(stuData);
 			if (stuByCode.isEmpty()) {
-				Toast.makeText(context, "查无此人", Toast.LENGTH_SHORT).show();
-				stuData = "";
+				if (!stuData.equals("扫码时间过长")) {
+					Toast.makeText(context, "查无此人", Toast.LENGTH_SHORT).show();
+					stuData = "";
+				}
 			} else {
 				String itemCode = DbService.getInstance(context).queryItemByMachineCode(Constant.INFRARED_BALL + "")
 						.getItemCode();
@@ -211,7 +221,6 @@ public class InfraredBallActivity extends NFCActivity {
 			IItemService itemService = new NFCItemServiceImpl(intent);
 			student = itemService.IC_ReadStuInfo();
 			log.info("红外实心球读卡->" + student.toString());
-
 			if (1 == student.getSex()) {
 				sex = "男";
 			} else {
@@ -221,29 +230,36 @@ public class InfraredBallActivity extends NFCActivity {
 			tvName.setText(student.getStuName().toString());
 			tvNumber.setText(student.getStuCode().toString());
 			
-			if (DbService.getInstance(context).loadAllItem().isEmpty()
-					|| DbService.getInstance(context).getStudentsCount() == 0) {
-				mHandler.sendEmptyMessage(3);
-				return;
-			}
-			String itemCode = DbService.getInstance(context).queryItemByMachineCode(Constant.INFRARED_BALL + "")
-					.getItemCode();
-			studentItems = DbService.getInstance(context).queryStudentItemByCode(student.getStuCode(), itemCode);
-			if (studentItems == null) {
-				mHandler.sendEmptyMessage(2);
+			item = itemService.IC_ReadItemResult(Constant.INFRARED_BALL);
+			String itemResult = "";
+
+			if (item.getResult()[0].getResultVal() == 0) {
+				itemResult = "";
+				btnCancel.setVisibility(View.GONE);
+				btnSave.setVisibility(View.GONE);
 			} else {
-				initOne();
+				itemResult = item.getResult()[0].getResultVal() + "";
+				btnCancel.setVisibility(View.VISIBLE);
+				btnSave.setVisibility(View.VISIBLE);
 			}
+			
+			etChengji.setText(itemResult);
+			etChengji.setSelection(etChengji.getText().length());
+			tvShow1.setVisibility(View.GONE);
+			etChengji.setEnabled(true);
+			rb0.setChecked(true);
+			tvShow.setText("请输入成绩");
+			tvShow.setVisibility(View.VISIBLE);
 
 		} catch (Exception e) {
 			log.error("红外实心球读卡失败");
+			mHandler.sendEmptyMessage(3);
 			e.printStackTrace();
 		}
 
 	}
 
 	private void initOne() {
-		etChengji.setText("");
 		tvShow1.setVisibility(View.GONE);
 		btnCancel.setVisibility(View.GONE);
 		btnSave.setVisibility(View.GONE);
@@ -261,7 +277,8 @@ public class InfraredBallActivity extends NFCActivity {
 		tvInfoUnit = (TextView) findViewById(R.id.tv_info_unit);
 		tvName = (TextView) findViewById(R.id.tv_name_edit);
 		tvGender = (TextView) findViewById(R.id.tv_gender_edit);
-		tvNumber = (TextView) findViewById(R.id.tv_number_edit);
+		tvNumber = (EditText) findViewById(R.id.et_number_edit);
+		btnGetStu = (Button) findViewById(R.id.btn_person_getstus);
 		tvShow1 = (TextView) findViewById(R.id.tv_infor_show1);
 		tvShow = (TextView) findViewById(R.id.tv_infor_show);
 		etChengji = (EditText) findViewById(R.id.et_info_chengji);
@@ -296,9 +313,20 @@ public class InfraredBallActivity extends NFCActivity {
 			btnScan.setVisibility(View.VISIBLE);
 			tvShow.setVisibility(View.GONE);
 		}
-		if ("".equals(tvNumber.getText().toString())) {
+		if (tvNumber.getText().toString().isEmpty()) {
 			stuData = "";
+			tvNumber.setEnabled(false);
+			btnGetStu.setVisibility(View.GONE);
+		} else if (tvNumber.getText().toString().equals("扫码时间过长")) {
+			tvNumber.setText("");
+			tvNumber.setEnabled(true);
+			btnGetStu.setVisibility(View.VISIBLE);
+			mHandler.sendEmptyMessage(4);
 		} else {
+			tvNumber.setEnabled(false);
+			tvNumber.setFocusableInTouchMode(false);
+			tvNumber.setFocusable(false);
+			btnGetStu.setVisibility(View.GONE);
 			if (stuByCode.get(0).getSex() == 1) {
 				sex = "男";
 			} else {
@@ -307,6 +335,7 @@ public class InfraredBallActivity extends NFCActivity {
 			tvName.setText(stuByCode.get(0).getStudentName());
 			tvGender.setText(sex);
 			etChengji.setEnabled(true);
+			etChengji.setFocusable(true);
 			btnScan.setVisibility(View.GONE);
 			tvShow.setText("请输入成绩");
 			tvShow.setVisibility(View.VISIBLE);
@@ -330,13 +359,55 @@ public class InfraredBallActivity extends NFCActivity {
 	private String checkedBtn = "正常";
 
 	private void setListener() {
+		btnGetStu.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				if (tvNumber.getText().toString().trim().isEmpty()) {
+					NetUtil.showToast(context, "学号为空");
+				} else {
+					List<ww.greendao.dao.Student> getstu = DbService.getInstance(context)
+							.queryStudentByCode(tvNumber.getText().toString().trim());
+					if (getstu.isEmpty()) {
+						NetUtil.showToast(context, "查无此人");
+						rb0.setEnabled(false);
+						rb1.setEnabled(false);
+						rb2.setEnabled(false);
+						rb3.setEnabled(false);
+						etChengji.setEnabled(false);
+					} else {
+						rb0.setEnabled(true);
+						rb1.setEnabled(true);
+						rb2.setEnabled(true);
+						rb3.setEnabled(true);
+						tvNumber.setEnabled(false);
+						tvNumber.setFocusableInTouchMode(false);
+						tvNumber.setFocusable(false);
+						btnGetStu.setVisibility(View.GONE);
+						if (getstu.get(0).getSex() == 1) {
+							sex = "男";
+						} else {
+							sex = "女";
+						}
+						tvName.setText(getstu.get(0).getStudentName());
+						tvGender.setText(sex);
+						etChengji.setEnabled(true);
+						etChengji.setFocusable(true);
+						btnScan.setVisibility(View.GONE);
+						tvShow.setText("请输入成绩");
+						tvShow.setVisibility(View.VISIBLE);
+						initOne();
+					}
+				}
+			}
+		});
+
 		btnScan.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				Intent intent = new Intent(InfraredBallActivity.this, CaptureActivity.class);
 				intent.putExtra("className", Constant.INFRARED_BALL + "");
 				startActivity(intent);
-				finish();
 			}
 		});
 
@@ -409,28 +480,35 @@ public class InfraredBallActivity extends NFCActivity {
 						etChengji.setText("");
 						return;
 					}
-					grade = etChengji.getText().toString();
-					// String itemCode =
-					// DbService.getInstance(context).queryItemByMachineCode(Constant.INFRARED_BALL
-					// + "")
-					// .getItemCode();
-					// String stuCode =
-					// DbService.getInstance(context).queryStudentByCode(tvNumber.getText().toString()).get(0)
-					// .getStudentCode();
-					// long stuID =
-					// DbService.getInstance(context).queryStudentByCode(tvNumber.getText().toString()).get(0)
-					// .getStudentID();
-					// long itemID =
-					// DbService.getInstance(context).queryItemByCode(itemCode).getItemID();
-					// studentItems =
-					// DbService.getInstance(context).queryStudentItemByCode(tvNumber.getText().toString(),
-					// itemCode);
+					grade = etChengji.getText().toString().trim();
 
-					if (studentItems == null) {
-						Toast.makeText(context, "当前学生项目不存在", Toast.LENGTH_SHORT).show();
-						return;
-					} else {
+					List<ww.greendao.dao.Student> students = DbService.getInstance(context)
+							.queryStudentByCode(tvNumber.getText().toString());
+					if (students.isEmpty()) {
+						int currentSex;
+						if (tvGender.getText().toString().equals("男")) {
+							currentSex = 1;
+						} else {
+							currentSex = 2;
+						}
+						ww.greendao.dao.Student currentStu = new ww.greendao.dao.Student(null,
+								tvNumber.getText().toString(), tvName.getText().toString(), currentSex, null, null,
+								null, null, HttpUtil.getCurrentTime(), null, null, null);
+						DbService.getInstance(context).saveStudent(currentStu);
 						resultState = 0;
+					} else {
+						List<StudentItem> stuItems = DbService.getInstance(context)
+								.queryStudentItemBystuCode(tvNumber.getText().toString());
+						String itemCode = DbService.getInstance(context)
+								.queryItemByMachineCode(Constant.INFRARED_BALL + "").getItemCode();
+						studentItems = DbService.getInstance(context)
+								.queryStudentItemByCode(tvNumber.getText().toString(), itemCode);
+						if ((!stuItems.isEmpty()) && studentItems == null) {
+							Toast.makeText(context, "当前学生项目不存在", Toast.LENGTH_SHORT).show();
+							return;
+						} else {
+							resultState = 0;
+						}
 					}
 				}
 				int flag = SaveDBUtil.saveGradesDB(context, tvNumber.getText().toString(), grade, resultState,
@@ -493,6 +571,35 @@ public class InfraredBallActivity extends NFCActivity {
 			@Override
 			public void afterTextChanged(Editable s) {
 				if (tvNumber.getText().toString().isEmpty()) {
+					if (readStyle != 1) {
+						tvShow.setVisibility(View.VISIBLE);
+					}
+					btnCancel.setVisibility(View.GONE);
+					btnSave.setVisibility(View.GONE);
+				} else {
+					tvShow.setVisibility(View.GONE);
+					btnCancel.setVisibility(View.VISIBLE);
+					btnSave.setVisibility(View.VISIBLE);
+				}
+			}
+		});
+
+		etChengji.addTextChangedListener(new TextWatcher() {
+			@Override
+			public void onTextChanged(CharSequence s, int start, int before, int count) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void afterTextChanged(Editable s) {
+				if (tvNumber.getText().toString().isEmpty() || etChengji.getText().toString().isEmpty()) {
 					if (readStyle != 1) {
 						tvShow.setVisibility(View.VISIBLE);
 					}

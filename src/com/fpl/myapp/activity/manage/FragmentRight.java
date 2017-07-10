@@ -55,6 +55,7 @@ public class FragmentRight extends Fragment {
 	private SharedPreferences mSharedPreferences;
 	private String ip;
 	private String number;
+	private String IMEI;
 	private static ListView lvProject;
 	private static ProjectAdapter adapter;
 
@@ -103,6 +104,8 @@ public class FragmentRight extends Fragment {
 		mSharedPreferences = context.getSharedPreferences("ipAddress", Activity.MODE_PRIVATE);
 		ip = mSharedPreferences.getString("ip", "");
 		number = mSharedPreferences.getString("number", "");
+		// 获取IMEI码
+		IMEI = mSharedPreferences.getString("IMEI", "0");
 
 		int selected = sharedPreferences.getInt("size", 0);
 		for (int i = 0; i < selected; i++) {
@@ -232,7 +235,7 @@ public class FragmentRight extends Fragment {
 							break;
 						case 2:
 							pbFrag.setVisibility(View.VISIBLE);
-							HttpUtil.getItemInfo(context, "http://" + ip + ":" + number);
+							HttpUtil.getStudentInfo(IMEI, context, "http://" + ip + ":" + number);
 							break;
 
 						default:
@@ -278,7 +281,7 @@ public class FragmentRight extends Fragment {
 
 		try {
 			Map<String, String> map = new HashMap<>();
-			map.put("mac", SplashScreenActivity.IMEI);
+			map.put("mac", IMEI);
 			String url = "http://" + ip + ":" + number + Constant.ITEM_URL;
 			HttpUtil.sendOkhttp(2, url, map, new HttpCallbackListener() {
 

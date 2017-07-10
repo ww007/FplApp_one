@@ -72,12 +72,15 @@ public class VolleyballActivity extends NFCActivity {
 	private List<ww.greendao.dao.Student> stuByCode;
 	private SharedPreferences mSharedPreferences;
 	private int readStyle;
+	private Button btnGetStu;
+	public static Activity mActivity;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.personal_information);
 		context = this;
+		mActivity = this;
 
 		mSharedPreferences = getSharedPreferences("readStyles", Activity.MODE_PRIVATE);
 		readStyle = mSharedPreferences.getInt("readStyle", 0);
@@ -197,7 +200,8 @@ public class VolleyballActivity extends NFCActivity {
 		tvInfoUnit = (TextView) findViewById(R.id.tv_info_unit);
 		tvName = (TextView) findViewById(R.id.tv_name_edit);
 		tvGender = (TextView) findViewById(R.id.tv_gender_edit);
-		tvNumber = (TextView) findViewById(R.id.tv_number_edit);
+		tvNumber = (TextView) findViewById(R.id.et_number_edit);
+		btnGetStu=(Button)findViewById(R.id.btn_person_getstus);
 		tvShow1 = (TextView) findViewById(R.id.tv_infor_show1);
 		tvShow = (TextView) findViewById(R.id.tv_infor_show);
 		etChengji = (EditText) findViewById(R.id.et_info_chengji);
@@ -274,7 +278,6 @@ public class VolleyballActivity extends NFCActivity {
 				Intent intent = new Intent(VolleyballActivity.this, CaptureActivity.class);
 				intent.putExtra("className", Constant.VOLLEYBALL + "");
 				startActivity(intent);
-				finish();
 			}
 		});
 

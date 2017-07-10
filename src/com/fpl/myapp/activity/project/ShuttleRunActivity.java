@@ -7,6 +7,7 @@ import com.fpl.myapp.activity.CaptureActivity;
 import com.fpl.myapp.base.NFCActivity;
 import com.fpl.myapp.util.Constant;
 import com.fpl.myapp.util.NetUtil;
+import com.wnb.android.nfc.dataobject.entity.IC_ItemResult;
 import com.wnb.android.nfc.dataobject.entity.Student;
 import com.wnb.android.nfc.dataobject.service.IItemService;
 import com.wnb.android.nfc.dataobject.service.impl.NFCItemServiceImpl;
@@ -36,6 +37,7 @@ public class ShuttleRunActivity extends NFCActivity {
 	private int readStyle;
 	private Context context;
 	private TextView tv;
+	private IC_ItemResult item;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -66,6 +68,14 @@ public class ShuttleRunActivity extends NFCActivity {
 			IItemService itemService = new NFCItemServiceImpl(intent);
 			student = itemService.IC_ReadStuInfo();
 			log.info("50米x8往返跑读卡=>" + student.toString());
+			item = itemService.IC_ReadItemResult(Constant.SHUTTLE_RUN);
+			int itemResult;
+
+			if (item.getResult()[0].getResultVal() == 0) {
+				itemResult = 0;
+			} else {
+				itemResult = item.getResult()[0].getResultVal();
+			}
 
 			if (1 == student.getSex()) {
 				sex = "男";
@@ -77,6 +87,7 @@ public class ShuttleRunActivity extends NFCActivity {
 				intent2.putExtra("number", student.getStuCode());
 				intent2.putExtra("name", student.getStuName());
 				intent2.putExtra("sex", sex);
+				intent2.putExtra("grade", itemResult);
 				intent2.putExtra("title", "50米x8往返跑");
 				startActivity(intent2);
 			} else {
@@ -84,6 +95,7 @@ public class ShuttleRunActivity extends NFCActivity {
 			}
 		} catch (Exception e) {
 			log.error("50米x8往返跑读卡失败");
+			Toast.makeText(this, "该卡无此项目", Toast.LENGTH_SHORT).show();
 			e.printStackTrace();
 		}
 
@@ -100,8 +112,10 @@ public class ShuttleRunActivity extends NFCActivity {
 		if (readStyle == 0) {
 			btnScan.setVisibility(View.GONE);
 		} else {
-			tv.setVisibility(View.INVISIBLE);
-			btnScan.setVisibility(View.VISIBLE);
+			tv.setVisibility(View.VISIBLE);
+			tv.setText("请扫码");
+			btnStart.setText("扫码");
+			// btnScan.setVisibility(View.VISIBLE);
 		}
 	}
 
@@ -112,16 +126,21 @@ public class ShuttleRunActivity extends NFCActivity {
 				Intent intent1 = new Intent(ShuttleRunActivity.this, CaptureActivity.class);
 				intent1.putExtra("className", Constant.SHUTTLE_RUN + "");
 				startActivity(intent1);
-				finish();
 			}
 		});
 		btnStart.setOnClickListener(new OnClickListener() {
 
 			@Override
 			public void onClick(View v) {
-				Intent intent = new Intent(ShuttleRunActivity.this, RunMeteringActivity.class);
-				intent.putExtra("title", tvTitle.getText().toString());
-				startActivity(intent);
+				if (readStyle == 0) {
+					Intent intent = new Intent(ShuttleRunActivity.this, RunMeteringActivity.class);
+					intent.putExtra("title", tvTitle.getText().toString());
+					startActivity(intent);
+				} else {
+					Intent intent1 = new Intent(ShuttleRunActivity.this, CaptureActivity.class);
+					intent1.putExtra("className", Constant.SHUTTLE_RUN + "");
+					startActivity(intent1);
+				}
 			}
 		});
 

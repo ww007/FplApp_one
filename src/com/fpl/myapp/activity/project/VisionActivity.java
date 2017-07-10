@@ -100,17 +100,23 @@ public class VisionActivity extends NFCActivity {
 				etLeft.setEnabled(false);
 				etRight.setEnabled(false);
 				break;
+			case 4:
+				NetUtil.showToast(context, "条码识别不出，请手动输入");
+				break;
 			default:
 				break;
 			}
 		};
 	};
+	private Button btnGetStu;
+	public static Activity mActivity;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_height_and_weight);
 		context = this;
+		mActivity = this;
 
 		mSharedPreferences = getSharedPreferences("readStyles", Activity.MODE_PRIVATE);
 		readStyle = mSharedPreferences.getInt("readStyle", 0);
@@ -119,8 +125,10 @@ public class VisionActivity extends NFCActivity {
 		if (stuData != null && stuData.length() != 0) {
 			stuByCode = DbService.getInstance(context).queryStudentByCode(stuData);
 			if (stuByCode.isEmpty()) {
-				Toast.makeText(context, "查无此人", Toast.LENGTH_SHORT).show();
-				stuData = "";
+				if (!stuData.equals("扫码时间过长")) {
+					Toast.makeText(context, "查无此人", Toast.LENGTH_SHORT).show();
+					stuData = "";
+				}
 			} else {
 				String itemCode = DbService.getInstance(context).queryItemByMachineCode2(Constant.VISION + "").get(0)
 						.getItemCode();
@@ -248,7 +256,8 @@ public class VisionActivity extends NFCActivity {
 		tvHUnit = (TextView) findViewById(R.id.tv_h_unit);
 		tvWUnit = (TextView) findViewById(R.id.tv_w_unit);
 		tvTitle = (TextView) findViewById(R.id.tv_hw_title);
-		tvNumber = (TextView) findViewById(R.id.tv_number_edit_HW);
+		tvNumber = (EditText) findViewById(R.id.et_number_edit_HW);
+		btnGetStu = (Button) findViewById(R.id.btn_hw_getstus);
 		tvGender = (TextView) findViewById(R.id.tv_gender_edit_HW);
 		tvLeft = (TextView) findViewById(R.id.tv_hw_height);
 		tvRight = (TextView) findViewById(R.id.tv_hw_weight);
@@ -289,9 +298,20 @@ public class VisionActivity extends NFCActivity {
 			btnScan.setVisibility(View.VISIBLE);
 			tvShow.setVisibility(View.GONE);
 		}
-		if ("".equals(tvNumber.getText().toString())) {
+		if (tvNumber.getText().toString().isEmpty()) {
 			stuData = "";
+			tvNumber.setEnabled(false);
+			btnGetStu.setVisibility(View.GONE);
+		} else if (tvNumber.getText().toString().equals("扫码时间过长")) {
+			tvNumber.setText("");
+			tvNumber.setEnabled(true);
+			btnGetStu.setVisibility(View.VISIBLE);
+			mHandler.sendEmptyMessage(4);
 		} else {
+			tvNumber.setEnabled(false);
+			tvNumber.setFocusableInTouchMode(false);
+			tvNumber.setFocusable(false);
+			btnGetStu.setVisibility(View.GONE);
 			if (stuByCode.get(0).getSex() == 1) {
 				sex = "男";
 			} else {
@@ -302,7 +322,7 @@ public class VisionActivity extends NFCActivity {
 			etLeft.setEnabled(true);
 			etRight.setEnabled(true);
 			btnScan.setVisibility(View.GONE);
-			tvShow.setText("请输入");
+			tvShow.setText("请输入成绩");
 			tvShow.setVisibility(View.VISIBLE);
 			initOne();
 		}
@@ -320,13 +340,49 @@ public class VisionActivity extends NFCActivity {
 	}
 
 	private void setListener() {
+		btnGetStu.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				if (tvNumber.getText().toString().trim().isEmpty()) {
+					NetUtil.showToast(context, "学号为空");
+				} else {
+					List<ww.greendao.dao.Student> getstu = DbService.getInstance(context)
+							.queryStudentByCode(tvNumber.getText().toString().trim());
+					if (getstu.isEmpty()) {
+						NetUtil.showToast(context, "查无此人");
+						etLeft.setEnabled(false);
+						etRight.setEnabled(false);
+					} else {
+						tvNumber.setEnabled(false);
+						tvNumber.setFocusableInTouchMode(false);
+						tvNumber.setFocusable(false);
+						btnGetStu.setVisibility(View.GONE);
+						if (getstu.get(0).getSex() == 1) {
+							sex = "男";
+						} else {
+							sex = "女";
+						}
+						tvName.setText(getstu.get(0).getStudentName());
+						tvGender.setText(sex);
+						etLeft.setEnabled(true);
+						etRight.setEnabled(true);
+						etLeft.setFocusable(true);
+						btnScan.setVisibility(View.GONE);
+						tvShow.setText("请输入成绩");
+						tvShow.setVisibility(View.VISIBLE);
+						initOne();
+					}
+				}
+			}
+		});
+
 		btnScan.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				Intent intent = new Intent(VisionActivity.this, CaptureActivity.class);
 				intent.putExtra("className", Constant.VISION + "");
 				startActivity(intent);
-				finish();
 			}
 		});
 
@@ -359,6 +415,7 @@ public class VisionActivity extends NFCActivity {
 			}
 		});
 
+		//未完
 		btnSave.setOnClickListener(new OnClickListener() {
 
 			@Override

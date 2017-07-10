@@ -10,7 +10,7 @@ import de.greenrobot.dao.DaoException;
 public class TotalRoundResult {
 
     private Long RoundResultID;
-    private long StudentItemID;
+    private Long StudentItemID;
     private String studentCode;
     private String itemCode;
     private Integer Result;
@@ -39,7 +39,7 @@ public class TotalRoundResult {
         this.RoundResultID = RoundResultID;
     }
 
-    public TotalRoundResult(Long RoundResultID, long StudentItemID, String studentCode, String itemCode, Integer Result, Integer RoundNo, String TestTime, Integer ResultState, Integer IsLastResult, String Mac, String Remark1, String Remark2) {
+    public TotalRoundResult(Long RoundResultID, Long StudentItemID, String studentCode, String itemCode, Integer Result, Integer RoundNo, String TestTime, Integer ResultState, Integer IsLastResult, String Mac, String Remark1, String Remark2) {
         this.RoundResultID = RoundResultID;
         this.StudentItemID = StudentItemID;
         this.studentCode = studentCode;
@@ -68,11 +68,11 @@ public class TotalRoundResult {
         this.RoundResultID = RoundResultID;
     }
 
-    public long getStudentItemID() {
+    public Long getStudentItemID() {
         return StudentItemID;
     }
 
-    public void setStudentItemID(long StudentItemID) {
+    public void setStudentItemID(Long StudentItemID) {
         this.StudentItemID = StudentItemID;
     }
 
@@ -158,7 +158,7 @@ public class TotalRoundResult {
 
     /** To-one relationship, resolved on first access. */
     public StudentItem getStudentItem() {
-        long __key = this.StudentItemID;
+        Long __key = this.StudentItemID;
         if (studentItem__resolvedKey == null || !studentItem__resolvedKey.equals(__key)) {
             if (daoSession == null) {
                 throw new DaoException("Entity is detached from DAO context");
@@ -174,12 +174,9 @@ public class TotalRoundResult {
     }
 
     public void setStudentItem(StudentItem studentItem) {
-        if (studentItem == null) {
-            throw new DaoException("To-one property 'StudentItemID' has not-null constraint; cannot set to-one to null");
-        }
         synchronized (this) {
             this.studentItem = studentItem;
-            StudentItemID = studentItem.getStudentItemID();
+            StudentItemID = studentItem == null ? null : studentItem.getStudentItemID();
             studentItem__resolvedKey = StudentItemID;
         }
     }

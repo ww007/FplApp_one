@@ -7,6 +7,7 @@ import com.fpl.myapp.activity.CaptureActivity;
 import com.fpl.myapp.base.NFCActivity;
 import com.fpl.myapp.util.Constant;
 import com.fpl.myapp.util.NetUtil;
+import com.wnb.android.nfc.dataobject.entity.IC_ItemResult;
 import com.wnb.android.nfc.dataobject.entity.Student;
 import com.wnb.android.nfc.dataobject.service.IItemService;
 import com.wnb.android.nfc.dataobject.service.impl.NFCItemServiceImpl;
@@ -16,6 +17,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -37,12 +39,15 @@ public class Run50Activity extends NFCActivity {
 	private int readStyle;
 	private Context context;
 	private TextView tv;
+	private IC_ItemResult item;
+	public static Activity mActivity;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_run);// 50和800公用一个布局
+		setContentView(R.layout.activity_run);
 		context = this;
+		mActivity = this;
 
 		mSharedPreferences = getSharedPreferences("readStyles", Activity.MODE_PRIVATE);
 		readStyle = mSharedPreferences.getInt("readStyle", 0);
@@ -68,17 +73,27 @@ public class Run50Activity extends NFCActivity {
 			IItemService itemService = new NFCItemServiceImpl(intent);
 			student = itemService.IC_ReadStuInfo();
 			log.info("50米跑读卡=>" + student.toString());
+			item = itemService.IC_ReadItemResult(Constant.RUN50);
+			int itemResult;
+
+			if (item.getResult()[0].getResultVal() == 0) {
+				itemResult = 0;
+			} else {
+				itemResult = item.getResult()[0].getResultVal();
+			}
 
 			if (1 == student.getSex()) {
 				sex = "男";
 			} else {
 				sex = "女";
 			}
+			Log.i("50米跑读卡", "" + itemResult);
 			if (student.getStuCode() != null) {
 				Intent intent2 = new Intent(Run50Activity.this, RunGradeInputActivity.class);
 				intent2.putExtra("number", student.getStuCode());
 				intent2.putExtra("name", student.getStuName());
 				intent2.putExtra("sex", sex);
+				intent2.putExtra("grade", itemResult);
 				intent2.putExtra("title", "50米跑");
 				startActivity(intent2);
 			} else {
@@ -102,8 +117,10 @@ public class Run50Activity extends NFCActivity {
 		if (readStyle == 0) {
 			btnScan.setVisibility(View.GONE);
 		} else {
-			tv.setVisibility(View.INVISIBLE);
-			btnScan.setVisibility(View.VISIBLE);
+			tv.setVisibility(View.VISIBLE);
+			tv.setText("请扫码");
+			btnStart.setText("扫码");
+			// btnScan.setVisibility(View.VISIBLE);
 		}
 	}
 
@@ -114,7 +131,6 @@ public class Run50Activity extends NFCActivity {
 				Intent intent1 = new Intent(Run50Activity.this, CaptureActivity.class);
 				intent1.putExtra("className", Constant.RUN50 + "");
 				startActivity(intent1);
-				finish();
 			}
 		});
 		btnStart.setOnClickListener(new OnClickListener() {
@@ -126,7 +142,10 @@ public class Run50Activity extends NFCActivity {
 					intent.putExtra("title", tvTitle.getText().toString());
 					startActivity(intent);
 				} else {
-					NetUtil.showToast(context, "当前为扫码模式");
+					// NetUtil.showToast(context, "当前为扫码模式");
+					Intent intent1 = new Intent(Run50Activity.this, CaptureActivity.class);
+					intent1.putExtra("className", Constant.RUN50 + "");
+					startActivity(intent1);
 				}
 			}
 		});

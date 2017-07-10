@@ -32,7 +32,7 @@ public class HelpActivity extends Activity {
 		data.add(Constant.HELP_3);
 		data.add(Constant.HELP_4);
 		data.add(Constant.HELP_5);
-//		data.add(Constant.HELP_6);
+		data.add(Constant.HELP_6);
 
 		tvTitle = (TextView) findViewById(R.id.tv_top_title);
 		tvTitle.setText("帮助");

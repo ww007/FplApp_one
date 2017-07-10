@@ -91,6 +91,7 @@ public class DbService {
 		qb.where(ItemDao.Properties.MachineCode.eq(code));
 		return qb.unique();
 	}
+
 	public List<Item> queryItemByMachineCode2(String code) {
 		QueryBuilder<Item> qb = itemDao.queryBuilder();
 		qb.where(ItemDao.Properties.MachineCode.eq(code));
@@ -136,7 +137,7 @@ public class DbService {
 		return roundresults;
 	}
 
-	public List<WhRoundResult> queryWhRoundResultByID(String stuCode) {
+	public List<WhRoundResult> queryWhRoundResultByCode(String stuCode) {
 		QueryBuilder<WhRoundResult> qb = whRoundResultDao.queryBuilder();
 		List<WhRoundResult> whRoundResults = qb.where(WhRoundResultDao.Properties.StudentCode.eq(stuCode)).list();
 		return whRoundResults;
@@ -149,11 +150,11 @@ public class DbService {
 		return qb.count();
 	}
 
-	public RoundResult queryRoundResultByCode(String stuCode, String itemCode, int no) {
+	public List<RoundResult> queryRoundResultByCode(String stuCode, String itemCode) {
 		QueryBuilder<RoundResult> qb = roundResultDao.queryBuilder();
 		qb.where(qb.and(RoundResultDao.Properties.StudentCode.eq(stuCode),
-				RoundResultDao.Properties.ItemCode.eq(itemCode), RoundResultDao.Properties.RoundNo.eq(no)));
-		return qb.unique();
+				RoundResultDao.Properties.ItemCode.eq(itemCode)));
+		return qb.list();
 	}
 
 	public List<RoundResult> getRoundResultForPage(int page) {
@@ -203,6 +204,12 @@ public class DbService {
 		qb.where(qb.and(StudentItemDao.Properties.StudentCode.eq(stuCode),
 				StudentItemDao.Properties.ItemCode.eq(itemCode)));
 		return qb.unique();
+	}
+
+	public List<StudentItem> queryStudentItemBystuCode(String stuCode) {
+		QueryBuilder<StudentItem> qb = studentItemDao.queryBuilder();
+		qb.where(StudentItemDao.Properties.StudentCode.eq(stuCode));
+		return qb.list();
 	}
 
 	public List<StudentItem> queryStudentHWByCode(String stuCode, String itemCode) {

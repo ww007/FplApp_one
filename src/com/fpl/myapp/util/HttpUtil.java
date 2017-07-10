@@ -3,10 +3,13 @@ package com.fpl.myapp.util;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -25,6 +28,8 @@ import com.fpl.myapp.entity.First_StudentItem;
 import com.fpl.myapp.entity.PH_Student;
 import com.fpl.myapp.entity.PH_StudentItem;
 import com.fpl.myapp.entity.Password;
+import com.fpl.myapp.entity.StateInfo;
+
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -43,6 +48,18 @@ public class HttpUtil {
 	private static List<Item> itemList;
 	public static int okFlag;
 	public static long startTime = 0;
+
+	/**
+	 * 获取当前系统时间
+	 * 
+	 * @return
+	 */
+	public static String getCurrentTime() {
+		SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.CHINA);
+		Date curDate = new Date(java.lang.System.currentTimeMillis());// 获取当前时间
+		String currentTime = formatter.format(curDate);
+		return currentTime;
+	}
 
 	/**
 	 * OKhttp发送请求
@@ -136,7 +153,7 @@ public class HttpUtil {
 				OkHttpClient mOkHttpClient = new OkHttpClient().newBuilder().connectTimeout(2, TimeUnit.SECONDS)
 						.readTimeout(5, TimeUnit.SECONDS).build();
 				StringBuilder stringBuilder = new StringBuilder();
-				stringBuilder.append(url1+Constant.GET_RESULT_FOR_STUCODE)
+				stringBuilder.append(url1 + Constant.GET_RESULT_FOR_STUCODE)
 						.append("?signature=" + getSignatureVal(paramMap) + "&stuCode=" + stuCode + "&mac=" + mac);
 
 				Log.i("stringBuilder=", stringBuilder.toString());
@@ -244,27 +261,31 @@ public class HttpUtil {
 
 	private static int studentFlag;
 	private static boolean StuItemFlag;
+	private static int itemFlag = 0;
 
 	/**
 	 * 获取学校、班级、年级信息
+	 * 
+	 * @param iMEI
 	 * 
 	 * @param context
 	 * @param url1
 	 * @return
 	 */
-	public static int getStudentInfo(final Context context, final String url1) {
+	public static int getStudentInfo(final String iMEI, final Context context, final String url1) {
+		startTime = System.currentTimeMillis();
 		if (context.getClass().equals(SplashScreenActivity.class)) {
 			itemFlag = 1;
 		} else {
 			itemFlag = 2;
 		}
 		Map<String, String> map = new HashMap<>();
-		map.put("mac", SplashScreenActivity.IMEI);
+		map.put("mac", iMEI);
 		sendOkhttp(itemFlag, url1 + Constant.STUDENT_URL, map, new HttpCallbackListener() {
 			@Override
 			public void onFinish(String response) {
 				SaveDBUtil.saveStudentDB(response, context);
-				sendOkHttpForStudentPage(url1 + Constant.STUDENT_Page_URL, 1, context, url1);
+				sendOkHttpForStudentPage(url1 + Constant.STUDENT_Page_URL, iMEI, 1, context, url1);
 			}
 
 			@Override
@@ -293,17 +314,16 @@ public class HttpUtil {
 	 */
 	private static int flag = 0;
 
-	private static void sendOkHttpForStudentPage(final String studentPageUrl, final int i, final Context context,
-			final String url1) {
+	private static void sendOkHttpForStudentPage(final String studentPageUrl, final String iMEI, final int i,
+			final Context context, final String url1) {
 		new Thread(new Runnable() {
 
 			@Override
 			public void run() {
 				final OkHttpClient client = new OkHttpClient().newBuilder().readTimeout(50, TimeUnit.SECONDS).build();
 				StringBuilder stringBuilder = new StringBuilder();
-				stringBuilder.append(studentPageUrl)
-						.append("?pageNo=" + i + "&" + "pageSize=1000" + "&mac=" + SplashScreenActivity.IMEI);
-				stringBuilder.append("&signature=" + getSignatureVal2(i));
+				stringBuilder.append(studentPageUrl).append("?pageNo=" + i + "&" + "pageSize=1000" + "&mac=" + iMEI);
+				stringBuilder.append("&signature=" + getSignatureVal2(i, iMEI));
 				Log.i("stringBuilder.toString()", stringBuilder.toString());
 				Request request = new Request.Builder().url(stringBuilder.toString()).get().build();
 				final Call call = client.newCall(request);
@@ -316,7 +336,7 @@ public class HttpUtil {
 						currentStuPage = currentStudent.getPageNo();
 						if (currentStudent.getTotalCount() == DbService.getInstance(context).getStudentsCount()) {
 							Log.i("------------", DbService.getInstance(context).getStudentsCount() + "学生信息已存在");
-							HttpUtil.getStudentItemInfo(context, url1);
+							HttpUtil.getStudentItemInfo(context, url1, iMEI);
 							return;
 						} else {
 							List<PH_Student> currentResult = currentStudent.getResult();
@@ -334,11 +354,11 @@ public class HttpUtil {
 							}
 							if (currentStudent.getPageNo() == currentStudent.getTotalPage()) {
 								SaveDBUtil.saveStudentPage(context, totalStudents);
-								HttpUtil.getStudentItemInfo(context,url1);
+								HttpUtil.getStudentItemInfo(context, url1, iMEI);
 								return;
 							} else {
-								sendOkHttpForStudentPage(url1 + Constant.STUDENT_Page_URL, currentStuPage, context,
-										url1);
+								sendOkHttpForStudentPage(url1 + Constant.STUDENT_Page_URL, iMEI, currentStuPage,
+										context, url1);
 							}
 						}
 					}
@@ -348,7 +368,8 @@ public class HttpUtil {
 						flag++;
 						Log.e(currentStuPage + "页下载失败", arg1 + "失败次数：" + flag);
 						if (flag < 100) {
-							sendOkHttpForStudentPage(url1+Constant.STUDENT_Page_URL, currentStuPage, context, url1);
+							sendOkHttpForStudentPage(url1 + Constant.STUDENT_Page_URL, iMEI, currentStuPage, context,
+									url1);
 						} else {
 							if (context.getClass().equals(SplashScreenActivity.class)) {
 								SplashScreenActivity.mHandle.sendEmptyMessage(1);
@@ -370,9 +391,10 @@ public class HttpUtil {
 	 * 获取学生分页信息加密
 	 * 
 	 * @param pageNo
+	 * @param iMEI
 	 * @return
 	 */
-	protected static String getSignatureVal2(int pageNo) {
+	protected static String getSignatureVal2(int pageNo, String iMEI) {
 		try {
 			StringBuilder stringBuilder = new StringBuilder();
 			List<String> list = new ArrayList<String>();
@@ -381,7 +403,7 @@ public class HttpUtil {
 			list.add("pageSize");
 			list.add("1000");
 			list.add("mac");
-			list.add(SplashScreenActivity.IMEI);
+			list.add(iMEI);
 			// 字典排序
 			Collections.sort(list);
 			for (int i = 0; i < list.size(); i++) {
@@ -408,7 +430,7 @@ public class HttpUtil {
 	private static int flag1 = 0;
 
 	public static void sendOkhttpForStudentItem(final String path, final int i, final Map<String, String> params,
-			final Context context) {
+			final Context context, final String iMEI) {
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
@@ -466,7 +488,7 @@ public class HttpUtil {
 										currentStuItem.getPageNo());
 								return;
 							} else {
-								sendOkhttpForStudentItem(path, currentPage, params, context);
+								sendOkhttpForStudentItem(path, currentPage, params, context, iMEI);
 							}
 						}
 					}
@@ -476,7 +498,7 @@ public class HttpUtil {
 						flag1++;
 						Log.e(currentPage + "页下载失败", arg1 + "失败次数：" + flag1);
 						if (flag1 < 100) {
-							sendOkhttpForStudentItem(path, currentPage, params, context);
+							sendOkhttpForStudentItem(path, currentPage, params, context, iMEI);
 						} else {
 							if (context.getClass().equals(SplashScreenActivity.class)) {
 								SplashScreenActivity.mHandle.sendEmptyMessage(1);
@@ -497,32 +519,78 @@ public class HttpUtil {
 	 * 获取学生项目信息
 	 * 
 	 * @param context
-	 * @param url1 
+	 * @param url1
+	 * @param iMEI
 	 * @param context2
 	 */
-	public static boolean getStudentItemInfo(final Context context, String url1) {
+	public static boolean getStudentItemInfo(final Context context, String url1, String iMEI) {
 		try {
 			Map<String, String> map = new HashMap<>();
-			map.put("mac", SplashScreenActivity.IMEI);
-			sendOkhttpForStudentItem(url1+Constant.STUDENT_ITEM_URL, 1, map, context);
+			map.put("mac", iMEI);
+			sendOkhttpForStudentItem(url1 + Constant.STUDENT_ITEM_URL, 1, map, context, iMEI);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return StuItemFlag;
 	}
 
-	public static void getPassword(final Context context, final String ip) {
+	public static void getState(final Context context, final String ip, final String iMEI) {
 		new Thread(new Runnable() {
 
 			@Override
 			public void run() {
 				Map<String, String> paramMap = new HashMap<>();
-				paramMap.put("mac", SplashScreenActivity.IMEI);
+				paramMap.put("mac", iMEI);
 				OkHttpClient mOkHttpClient = new OkHttpClient().newBuilder().connectTimeout(5, TimeUnit.SECONDS)
 						.readTimeout(5, TimeUnit.SECONDS).build();
 				StringBuilder stringBuilder = new StringBuilder();
-				stringBuilder.append(ip + Constant.GET_PASSWORD).append(
-						"?signature=" + HttpUtil.getSignatureVal(paramMap) + "&mac=" + SplashScreenActivity.IMEI);
+				stringBuilder.append(ip + Constant.GET_STATE)
+						.append("?signature=" + HttpUtil.getSignatureVal(paramMap) + "&mac=" + iMEI);
+
+				Log.i("stringBuilder=", stringBuilder.toString());
+				Request request = new Request.Builder().url(stringBuilder.toString()).post(RequestBody.create(null, ""))
+						.build();
+				Call call = mOkHttpClient.newCall(request);
+				call.enqueue(new Callback() {
+
+					@Override
+					public void onResponse(Call arg0, Response response) throws IOException {
+						String stateResult = response.body().string();
+						Log.i("result============", stateResult);
+						List<StateInfo> stateInfo = JSON.parseArray("[" + stateResult + "]", StateInfo.class);
+						if (stateInfo.isEmpty()) {
+							SharedpreferencesActivity.mHandler.sendEmptyMessage(3);
+						} else {
+							if (stateInfo.get(0).getState().equals("1")) {
+								// getPassword(context, ip);
+								SharedpreferencesActivity.sendItemRequest(ip);
+							} else {
+								SharedpreferencesActivity.mHandler.sendEmptyMessage(4);
+							}
+						}
+					}
+
+					@Override
+					public void onFailure(Call arg0, IOException arg1) {
+						SharedpreferencesActivity.mHandler.sendEmptyMessage(3);
+					}
+				});
+			}
+		}).start();
+	}
+
+	public static void getPassword(final Context context, final String ip, final String iMEI) {
+		new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+				Map<String, String> paramMap = new HashMap<>();
+				paramMap.put("mac", iMEI);
+				OkHttpClient mOkHttpClient = new OkHttpClient().newBuilder().connectTimeout(5, TimeUnit.SECONDS)
+						.readTimeout(5, TimeUnit.SECONDS).build();
+				StringBuilder stringBuilder = new StringBuilder();
+				stringBuilder.append(ip + Constant.GET_PASSWORD)
+						.append("?signature=" + HttpUtil.getSignatureVal(paramMap) + "&mac=" + iMEI);
 
 				Log.i("stringBuilder=", stringBuilder.toString());
 				Request request = new Request.Builder().url(stringBuilder.toString()).post(RequestBody.create(null, ""))
@@ -533,23 +601,25 @@ public class HttpUtil {
 					@Override
 					public void onResponse(Call arg0, Response response) throws IOException {
 						result = response.body().string();
-						List<Password> password = JSON.parseArray("[" + result + "]", Password.class);
 						Log.i("result============", result);
+						List<Password> password = JSON.parseArray("[" + result + "]", Password.class);
 						SharedPreferences mSharedPreferences = context.getSharedPreferences("password",
 								Activity.MODE_PRIVATE);
 						SharedPreferences.Editor editor = mSharedPreferences.edit();
-						editor.putString("password", password.get(0).getPassword());
-						editor.commit();
 						if (password.isEmpty()) {
 							SharedpreferencesActivity.mHandler.sendEmptyMessage(1);
 						} else {
-							SharedpreferencesActivity.mHandler.sendEmptyMessage(2);
+							// SharedpreferencesActivity.mHandler.sendEmptyMessage(2);
+							editor.putString("password", password.get(0).getPassword());
+							editor.commit();
 						}
+						getState(context, ip, iMEI);
+						// SharedpreferencesActivity.sendItemRequest(ip);
 					}
 
 					@Override
 					public void onFailure(Call arg0, IOException arg1) {
-						SharedpreferencesActivity.mHandler.sendEmptyMessage(1);
+						SharedpreferencesActivity.mHandler.sendEmptyMessage(3);
 					}
 				});
 			}
@@ -561,58 +631,59 @@ public class HttpUtil {
 	 * 
 	 * @param context
 	 */
-	private static int itemFlag = 0;
+	// private static int itemFlag = 0;
 
-	public static int getItemInfo(final Context context, final String url1) {
-		try {
-			if (context.getClass().equals(SplashScreenActivity.class)) {
-				itemFlag = 1;
-			} else {
-				itemFlag = 2;
-			}
-			startTime = System.currentTimeMillis();
-			Map<String, String> map = new HashMap<>();
-			map.put("mac", SplashScreenActivity.IMEI);
-			itemFlag = sendOkhttp(itemFlag, url1+Constant.ITEM_URL, map, new HttpCallbackListener() {
-				public void onFinish(String response) {
-					// 解析获取的Json数据
-					itemList = JSON.parseArray(response, Item.class);
-					if (DbService.getInstance(context).loadAllItem().size() != itemList.size()) {
-						DbService.getInstance(context).saveItemLists(itemList);
-						Log.i("success", "保存项目信息成功");
-					} else {
-						Log.i("fail", "项目信息已存在");
-					}
-					HttpUtil.getStudentInfo(context, url1);
-				}
-
-				@Override
-				public void onError(Exception e) {
-					Log.i("error", "项目数据下载失败");
-					if (context.getClass().equals(SplashScreenActivity.class)) {
-						SplashScreenActivity.mHandle.sendEmptyMessage(1);
-						Intent intent = new Intent(context, MainActivity.class);
-						intent.putExtra("1", 1);
-						context.startActivity(intent);
-					} else {
-						FragmentRight.mHandler.sendEmptyMessage(2);
-					}
-				}
-			});
-		} catch (Exception e) {
-			Log.i("-1", "项目数据下载失败");
-			if (context.getClass().equals(SplashScreenActivity.class)) {
-				SplashScreenActivity.mHandle.sendEmptyMessage(1);
-				Intent intent = new Intent(context, MainActivity.class);
-				intent.putExtra("1", 1);
-				context.startActivity(intent);
-			} else {
-				FragmentRight.mHandler.sendEmptyMessage(2);
-			}
-			e.printStackTrace();
-		}
-		Log.i("itemFlag=", okFlag + "");
-		return okFlag;
-	}
+	// public static int getItemInfo(final Context context, final String url1) {
+	// try {
+	// if (context.getClass().equals(SplashScreenActivity.class)) {
+	// itemFlag = 1;
+	// } else {
+	// itemFlag = 2;
+	// }
+	// Map<String, String> map = new HashMap<>();
+	// map.put("mac", SplashScreenActivity.IMEI);
+	// itemFlag = sendOkhttp(itemFlag, url1 + Constant.ITEM_URL, map, new
+	// HttpCallbackListener() {
+	// public void onFinish(String response) {
+	// // 解析获取的Json数据
+	// itemList = JSON.parseArray(response, Item.class);
+	// if (DbService.getInstance(context).loadAllItem().size() !=
+	// itemList.size()) {
+	// DbService.getInstance(context).saveItemLists(itemList);
+	// Log.i("success", "保存项目信息成功");
+	// } else {
+	// Log.i("fail", "项目信息已存在");
+	// }
+	// // HttpUtil.getStudentInfo(context, url1);
+	// }
+	//
+	// @Override
+	// public void onError(Exception e) {
+	// Log.i("error", "项目数据下载失败");
+	// if (context.getClass().equals(SplashScreenActivity.class)) {
+	// SplashScreenActivity.mHandle.sendEmptyMessage(1);
+	// Intent intent = new Intent(context, MainActivity.class);
+	// intent.putExtra("1", 1);
+	// context.startActivity(intent);
+	// } else {
+	// FragmentRight.mHandler.sendEmptyMessage(2);
+	// }
+	// }
+	// });
+	// } catch (Exception e) {
+	// Log.i("-1", "项目数据下载失败");
+	// if (context.getClass().equals(SplashScreenActivity.class)) {
+	// SplashScreenActivity.mHandle.sendEmptyMessage(1);
+	// Intent intent = new Intent(context, MainActivity.class);
+	// intent.putExtra("1", 1);
+	// context.startActivity(intent);
+	// } else {
+	// FragmentRight.mHandler.sendEmptyMessage(2);
+	// }
+	// e.printStackTrace();
+	// }
+	// Log.i("itemFlag=", okFlag + "");
+	// return okFlag;
+	// }
 
 }

@@ -16,6 +16,7 @@ import com.fpl.myapp.activity.project.JumpHeightActivity;
 import com.fpl.myapp.activity.project.PullUpActivity;
 import com.fpl.myapp.activity.project.PushUpActivity;
 import com.fpl.myapp.activity.project.RopeSkippingActivity;
+import com.fpl.myapp.activity.project.Run50Activity;
 import com.fpl.myapp.activity.project.RunGradeInputActivity;
 import com.fpl.myapp.activity.project.ShuttlecockKickingActivity;
 import com.fpl.myapp.activity.project.SitAndReachActivity;
@@ -85,6 +86,7 @@ public class CaptureActivity extends Activity {
 	private String ip;
 	private String number;
 	private Context context;
+	private long startTime;
 
 	static {
 		System.loadLibrary("iconv");
@@ -115,52 +117,68 @@ public class CaptureActivity extends Activity {
 		gpio = new LightEmGpio();
 		isScanOpen = true;
 
+		startTime = System.currentTimeMillis();
+
 	}
 
 	private void initView() {
 		switch (classNo) {
 		case "" + Constant.HEIGHT_WEIGHT:
 			mClass = HeightAndWeightActivity.class;
+			// HeightAndWeightActivity.mActivity.finish();
 			break;
 		case "" + Constant.VITAL_CAPACITY:
 			mClass = VitalCapacityActivity.class;
+			// VitalCapacityActivity.mActivity.finish();
 			break;
 		case "" + Constant.BROAD_JUMP:
 			mClass = BroadJumpActivity.class;
+			// BroadJumpActivity.mActivity.finish();
 			break;
 		case "" + Constant.JUMP_HEIGHT:
 			mClass = JumpHeightActivity.class;
+			// JumpHeightActivity.mActivity.finish();
 			break;
 		case "" + Constant.PUSH_UP:
 			mClass = PushUpActivity.class;
+			// PushUpActivity.mActivity.finish();
 			break;
 		case "" + Constant.SIT_UP:
 			mClass = SitUpActivity.class;
+			// SitUpActivity.mActivity.finish();
 			break;
 		case "" + Constant.SIT_AND_REACH:
 			mClass = SitAndReachActivity.class;
+			// SitAndReachActivity.mActivity.finish();
 			break;
 		case "" + Constant.ROPE_SKIPPING:
 			mClass = RopeSkippingActivity.class;
+			// RopeSkippingActivity.mActivity.finish();
 			break;
 		case "" + Constant.VISION:
 			mClass = VisionActivity.class;
+			// VisionActivity.mActivity.finish();
 			break;
 		case "" + Constant.PULL_UP:
 			mClass = PullUpActivity.class;
+			// PullUpActivity.mActivity.finish();
 			break;
 		case "" + Constant.INFRARED_BALL:
 			mClass = InfraredBallActivity.class;
+			// InfraredBallActivity.mActivity.finish();
 			break;
 		case "" + Constant.MIDDLE_RACE:
 			mClass = RunGradeInputActivity.class;
+			// RunGradeInputActivity.mActivity.finish();
 			title = "800/1000米跑";
 			break;
 		case "" + Constant.VOLLEYBALL:
 			mClass = VolleyballActivity.class;
+			// VolleyballActivity.mActivity.finish();
 			break;
 		case "" + Constant.BASKETBALL_SKILL:
 			mClass = BasketballActivity.class;
+			// BasketballActivity.mActivity.finish();
 			break;
 		case "" + Constant.SHUTTLE_RUN:
 			mClass = RunGradeInputActivity.class;
@@ -176,23 +194,29 @@ public class CaptureActivity extends Activity {
 			break;
 		case "" + Constant.FOOTBALL_SKILL:
 			mClass = FootballActivity.class;
+			// FootballActivity.mActivity.finish();
 			break;
 		case "" + Constant.KICKING_SHUTTLECOCK:
 			mClass = ShuttlecockKickingActivity.class;
+			// ShuttlecockKickingActivity.mActivity.finish();
 			break;
 		case Constant.runGradeInput:
 			mClass = RunGradeInputActivity.class;
+			// RunGradeInputActivity.mActivity.finish();
 			break;
 		case "" + Constant.SWIM:
 			mClass = SwimActivity.class;
+			// SwimActivity.mActivity.finish();
 			break;
 		case "icinfo":
 			Flag = 1;
 			mClass = ICInformationActivity.class;
+			// ICInformationActivity.mActivity.finish();
 			break;
 
 		default:
 			break;
+
 		}
 	}
 
@@ -392,6 +416,7 @@ public class CaptureActivity extends Activity {
 							playBeepSoundAndVibrate();// 播放声音和振动代表成功获取二维码
 
 							if (Flag == 1) {
+								ICInformationActivity.mActivity.finish();
 								if ("".equals(ip) || "".equals(number)) {
 									Intent mIntent = new Intent(context, ICInformationActivity.class);
 									mIntent.putExtra("result", "3");
@@ -399,8 +424,13 @@ public class CaptureActivity extends Activity {
 									finish();
 
 								} else {
-									HttpUtil.sendForResult("http://" + ip + ":" + number, context, codeMessage,
-											SplashScreenActivity.IMEI);
+									// HttpUtil.sendForResult("http://" + ip +
+									// ":" + number, context, codeMessage,
+									// SplashScreenActivity.IMEI);
+									Intent mIntent = new Intent(context, ICInformationActivity.class);
+									mIntent.putExtra("codeMessage", codeMessage);
+									startActivity(mIntent);
+									finish();
 								}
 
 							} else {
@@ -409,7 +439,9 @@ public class CaptureActivity extends Activity {
 								mIntent.putExtra("title", title);
 								mIntent.putExtra("title2", title2);
 								startActivity(mIntent);
-								CaptureActivity.this.finish();
+								Log.i("codeMessage=", codeMessage);
+								finishActivity();
+								finish();
 							}
 							break;
 						}
@@ -419,12 +451,101 @@ public class CaptureActivity extends Activity {
 		}
 	};
 
+	private void finishActivity() {
+		switch (classNo) {
+		case "" + Constant.HEIGHT_WEIGHT:
+			HeightAndWeightActivity.mActivity.finish();
+			break;
+		case "" + Constant.VITAL_CAPACITY:
+			VitalCapacityActivity.mActivity.finish();
+			break;
+		case "" + Constant.BROAD_JUMP:
+			BroadJumpActivity.mActivity.finish();
+			break;
+		case "" + Constant.JUMP_HEIGHT:
+			JumpHeightActivity.mActivity.finish();
+			break;
+		case "" + Constant.PUSH_UP:
+			PushUpActivity.mActivity.finish();
+			break;
+		case "" + Constant.SIT_UP:
+			SitUpActivity.mActivity.finish();
+			break;
+		case "" + Constant.SIT_AND_REACH:
+			SitAndReachActivity.mActivity.finish();
+			break;
+		case "" + Constant.ROPE_SKIPPING:
+			RopeSkippingActivity.mActivity.finish();
+			break;
+		case "" + Constant.VISION:
+			VisionActivity.mActivity.finish();
+			break;
+		case "" + Constant.PULL_UP:
+			PullUpActivity.mActivity.finish();
+			break;
+		case "" + Constant.INFRARED_BALL:
+			InfraredBallActivity.mActivity.finish();
+			break;
+		case "" + Constant.MIDDLE_RACE:
+			break;
+		case "" + Constant.VOLLEYBALL:
+			VolleyballActivity.mActivity.finish();
+			break;
+		case "" + Constant.BASKETBALL_SKILL:
+			BasketballActivity.mActivity.finish();
+			break;
+		case "" + Constant.SHUTTLE_RUN:
+			break;
+		case "" + Constant.WALKING1500:
+			break;
+		case "" + Constant.WALKING2000:
+			break;
+		case "" + Constant.RUN50:
+			break;
+		case "" + Constant.FOOTBALL_SKILL:
+			FootballActivity.mActivity.finish();
+			break;
+		case "" + Constant.KICKING_SHUTTLECOCK:
+			ShuttlecockKickingActivity.mActivity.finish();
+			break;
+		case Constant.runGradeInput:
+			RunGradeInputActivity.mActivity.finish();
+			break;
+		case "" + Constant.SWIM:
+			SwimActivity.mActivity.finish();
+			break;
+		case "icinfo":
+			ICInformationActivity.mActivity.finish();
+			break;
+
+		default:
+			break;
+
+		}
+	}
+
 	/**
 	 * 自动对焦回调
 	 */
 	AutoFocusCallback autoFocusCB = new AutoFocusCallback() {
 		public void onAutoFocus(boolean success, Camera camera) {
-			autoFocusHandler.postDelayed(doAutoFocus, 1000);
+			Log.i("11111111111111", "111111111111");
+			long endTime = System.currentTimeMillis();
+			long hasTime = endTime - startTime;
+			if (Flag != 1) {
+				if (hasTime < 8000) {
+					autoFocusHandler.postDelayed(doAutoFocus, 1000);
+				} else {
+					Intent mIntent = new Intent(CaptureActivity.this, mClass);
+					mIntent.putExtra("data", "扫码时间过长");
+					mIntent.putExtra("title", title);
+					mIntent.putExtra("title2", title2);
+					startActivity(mIntent);
+					finishActivity();
+					finish();
+				}
+			}
+
 		}
 	};
 

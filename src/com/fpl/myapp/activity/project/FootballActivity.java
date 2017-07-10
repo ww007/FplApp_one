@@ -7,6 +7,7 @@ import com.fpl.myapp.activity.CaptureActivity;
 import com.fpl.myapp.base.NFCActivity;
 import com.fpl.myapp.util.Constant;
 import com.fpl.myapp.util.NetUtil;
+import com.wnb.android.nfc.dataobject.entity.IC_ItemResult;
 import com.wnb.android.nfc.dataobject.entity.Student;
 import com.wnb.android.nfc.dataobject.service.IItemService;
 import com.wnb.android.nfc.dataobject.service.impl.NFCItemServiceImpl;
@@ -37,12 +38,15 @@ public class FootballActivity extends NFCActivity {
 	private int readStyle;
 	private Context context;
 	private TextView tv;
+	private IC_ItemResult item;
+	public static Activity mActivity;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_run);
 		context = this;
+		mActivity = this;
 
 		mSharedPreferences = getSharedPreferences("readStyles", Activity.MODE_PRIVATE);
 		readStyle = mSharedPreferences.getInt("readStyle", 0);
@@ -68,6 +72,14 @@ public class FootballActivity extends NFCActivity {
 			IItemService itemService = new NFCItemServiceImpl(intent);
 			student = itemService.IC_ReadStuInfo();
 			log.info("足球运球读卡=>" + student.toString());
+			item = itemService.IC_ReadItemResult(Constant.RUN50);
+			int itemResult;
+
+			if (item.getResult()[0].getResultVal() == 0) {
+				itemResult =0;
+			} else {
+				itemResult = item.getResult()[0].getResultVal();
+			}
 
 			if (1 == student.getSex()) {
 				sex = "男";
@@ -79,6 +91,7 @@ public class FootballActivity extends NFCActivity {
 				intent2.putExtra("number", student.getStuCode());
 				intent2.putExtra("name", student.getStuName());
 				intent2.putExtra("sex", sex);
+				intent2.putExtra("grade", itemResult);
 				intent2.putExtra("title", "足球运球");
 				startActivity(intent2);
 			} else {
@@ -102,8 +115,10 @@ public class FootballActivity extends NFCActivity {
 		if (readStyle == 0) {
 			btnScan.setVisibility(View.GONE);
 		} else {
-			tv.setVisibility(View.INVISIBLE);
-			btnScan.setVisibility(View.VISIBLE);
+			tv.setVisibility(View.VISIBLE);
+			tv.setText("请扫码");
+			btnStart.setText("扫码");
+			// btnScan.setVisibility(View.VISIBLE);
 		}
 	}
 
@@ -114,16 +129,21 @@ public class FootballActivity extends NFCActivity {
 				Intent intent1 = new Intent(FootballActivity.this, CaptureActivity.class);
 				intent1.putExtra("className", Constant.FOOTBALL_SKILL + "");
 				startActivity(intent1);
-				finish();
 			}
 		});
 		btnStart.setOnClickListener(new OnClickListener() {
 
 			@Override
 			public void onClick(View v) {
-				Intent intent = new Intent(FootballActivity.this, RunMeteringActivity.class);
-				intent.putExtra("title", tvTitle.getText().toString());
-				startActivity(intent);
+				if (readStyle == 0) {
+					Intent intent = new Intent(FootballActivity.this, RunMeteringActivity.class);
+					intent.putExtra("title", tvTitle.getText().toString());
+					startActivity(intent);
+				} else {
+					Intent intent1 = new Intent(FootballActivity.this, CaptureActivity.class);
+					intent1.putExtra("className", Constant.FOOTBALL_SKILL + "");
+					startActivity(intent1);
+				}
 			}
 		});
 

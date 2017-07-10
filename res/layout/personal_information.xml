@@ -94,15 +94,30 @@
             android:textSize="20sp"
             tools:ignore="RtlHardcoded" />
 
-        <TextView
-            android:id="@+id/tv_number_edit"
+        <EditText
+            android:id="@+id/et_number_edit"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignBaseline="@+id/tv_info_number"
             android:layout_alignBottom="@+id/tv_info_number"
             android:layout_toRightOf="@+id/tv_info_number"
+            android:minEms="6"
+            android:singleLine="true"
             android:text="123456789011"
             android:textSize="20sp" />
+
+        <Button
+            android:id="@+id/btn_person_getstus"
+            android:layout_width="50dp"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@+id/tv_info_number"
+            android:layout_alignTop="@+id/tv_info_number"
+            android:layout_marginLeft="5dp"
+            android:layout_toRightOf="@+id/et_number_edit"
+            android:background="@drawable/circle_corner_button_selector"
+            android:text="搜索"
+            android:textColor="#ffffff"
+            android:textSize="15sp" />
 
         <TextView
             android:id="@+id/tv_gender_edit"
@@ -164,7 +179,7 @@
                 android:id="@+id/tv_unit_sec"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="分"
+                android:text="′"
                 android:textSize="18sp" />
 
             <EditText
@@ -173,6 +188,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:inputType="number"
+                android:maxLength="2"
                 android:minEms="2"
                 android:singleLine="true"
                 android:text="08"
@@ -183,7 +199,7 @@
                 android:id="@+id/tv_unit_s"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="秒"
+                android:text="″"
                 android:textSize="18sp" />
 
             <EditText
@@ -192,9 +208,10 @@
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:inputType="number"
+                android:maxLength="2"
                 android:minEms="2"
                 android:singleLine="true"
-                android:text="380"
+                android:text="38"
                 android:textColor="#000000"
                 android:textSize="18sp" />
 
@@ -202,7 +219,7 @@
                 android:id="@+id/tv_unit_ms"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="毫秒"
+                android:text=""
                 android:textSize="18sp" />
         </LinearLayout>
 
@@ -228,6 +245,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:inputType="numberDecimal|numberSigned"
+                android:maxLength="8"
                 android:minEms="4"
                 android:singleLine="true"
                 android:text="08.891"

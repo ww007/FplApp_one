@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
 import org.apache.log4j.Logger;
 import com.fpl.myapp2.R;
 import com.alibaba.fastjson.JSON;
@@ -103,6 +105,7 @@ public class OnlineActivity extends Activity {
 	private ArrayList<PH_RoundGround> ph_RoundGrounds;
 	private PH_RoundGround ph_RoundGround;
 	private AsyncSession mAsyncSession;
+	private String IMEI;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -115,8 +118,10 @@ public class OnlineActivity extends Activity {
 		ip = mSharedPreferences.getString("ip", "");
 		number = mSharedPreferences.getString("number", "");
 		Log.i("ip", ip);
+		// 获取IMEI码
+		IMEI = mSharedPreferences.getString("IMEI", "0");
 		// 获取Android机IMEI号
-		MACID = SplashScreenActivity.IMEI;
+		MACID = IMEI;
 
 		MACORIMEI = MACID;
 
@@ -328,7 +333,7 @@ public class OnlineActivity extends Activity {
 				paramMap.put("mac", MACORIMEI);
 				currentPage = page;
 				ph_RoundGrounds = new ArrayList<PH_RoundGround>();
-				OkHttpClient okHttpClient = new OkHttpClient();
+				OkHttpClient okHttpClient = new OkHttpClient().newBuilder().connectTimeout(2, TimeUnit.SECONDS).build();
 				MediaType JSONTYPE = MediaType.parse("application/json; charset=utf-8");
 				roundResults = DbService.getInstance(context).getRoundResultForPage(page);
 				if (roundResults.isEmpty() && page == 0) {
@@ -346,6 +351,12 @@ public class OnlineActivity extends Activity {
 					int round = roundResult.getRoundNo();
 					String time = roundResult.getTestTime();
 					int state = roundResult.getResultState();
+					Long stuItemID;
+					if (roundResult.getStudentItemID() == null) {
+						stuItemID = null;
+					} else {
+						stuItemID = roundResult.getStudentItemID();
+					}
 
 					ph_RoundGround.setIsLastResult(0);
 					ph_RoundGround.setItemCode(itemCode);
@@ -367,7 +378,7 @@ public class OnlineActivity extends Activity {
 					totalRoundResult.setRoundNo(round);
 					totalRoundResult.setRoundResultID(null);
 					totalRoundResult.setStudentCode(stuCode);
-					totalRoundResult.setStudentItemID(roundResult.getStudentItemID());
+					totalRoundResult.setStudentItemID(stuItemID);
 					totalRoundResult.setTestTime(time);
 					totalRoundResults.add(totalRoundResult);
 
@@ -421,7 +432,7 @@ public class OnlineActivity extends Activity {
 						@Override
 						public void onFailure(Call arg0, IOException arg1) {
 							log.error("上传失败");
-							if (flag > 50) {
+							if (flag > 10) {
 								handler.sendEmptyMessage(4);
 								return;
 							} else {
@@ -433,7 +444,7 @@ public class OnlineActivity extends Activity {
 
 				} catch (Exception e) {
 					e.printStackTrace();
-					if (flag > 50) {
+					if (flag > 10) {
 						handler.sendEmptyMessage(4);
 						return;
 					} else {
@@ -459,10 +470,10 @@ public class OnlineActivity extends Activity {
 				mAsyncSession = DbService.mDaoSession.startAsyncSession();
 				Map<String, String> paramMap = new HashMap<>();
 				paramMap.put("mac", MACORIMEI);
-				ivSend.setClickable(false);
+				// ivSend.setClickable(false);
 				currentPage = page;
 				whRoundResuls = new ArrayList<>();
-				OkHttpClient okHttpClient = new OkHttpClient();
+				OkHttpClient okHttpClient = new OkHttpClient().newBuilder().connectTimeout(2, TimeUnit.SECONDS).build();
 				MediaType JSONTYPE = MediaType.parse("application/json; charset=utf-8");
 
 				List<WhRoundResult> whRoundResults = DbService.getInstance(context).getWhRoundResultForPage(page);
@@ -549,7 +560,7 @@ public class OnlineActivity extends Activity {
 
 						@Override
 						public void onFailure(Call arg0, IOException arg1) {
-							if (flag > 10) {
+							if (flag > 3) {
 								handler.sendEmptyMessage(4);
 								return;
 							} else {
@@ -562,7 +573,7 @@ public class OnlineActivity extends Activity {
 					});
 				} catch (Exception e) {
 					e.printStackTrace();
-					if (flag > 10) {
+					if (flag > 3) {
 						handler.sendEmptyMessage(4);
 						return;
 					} else {

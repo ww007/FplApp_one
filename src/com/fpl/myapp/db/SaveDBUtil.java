@@ -21,11 +21,13 @@ import com.fpl.myapp.entity.PH_StudentItem;
 import com.fpl.myapp.util.HttpUtil;
 import com.wnb.android.nfc.dataobject.entity.IC_Result;
 
+import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.BitmapFactory;
 import android.util.Log;
 import de.greenrobot.dao.async.AsyncSession;
@@ -44,7 +46,7 @@ public class SaveDBUtil {
 	public static int over = 0;
 	private static NotificationManager notificationManager;
 	private static ArrayList<Student> mStudents = new ArrayList<>();
-	private static AsyncSession mAsyncSession = DbService.mDaoSession.startAsyncSession();
+	private static AsyncSession mAsyncSession;
 	private static ArrayList<StudentItem> mStudentItems;
 	private static ArrayList<Classes> mClasses;
 	private static ArrayList<Grade> mGrade;
@@ -81,6 +83,7 @@ public class SaveDBUtil {
 	 * @param context
 	 */
 	public static void saveStudentDB(String response, Context context) {
+		mAsyncSession = DbService.mDaoSession.startAsyncSession();
 		mClasses = new ArrayList<Classes>();
 		mGrade = new ArrayList<Grade>();
 		// 解析获取的Json数据
@@ -148,6 +151,7 @@ public class SaveDBUtil {
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
+				mAsyncSession = DbService.mDaoSession.startAsyncSession();
 				// 保存学生信息
 				Log.i("students.size()---", students.size() + "");
 				for (int i = 0; i < students.size(); i++) {
@@ -190,6 +194,7 @@ public class SaveDBUtil {
 
 			@Override
 			public void run() {
+				mAsyncSession = DbService.mDaoSession.startAsyncSession();
 				Log.i("studentItems", studentItems.size() + "");
 				mStudentItems = new ArrayList<>();
 				for (PH_StudentItem stuItem : studentItems) {
@@ -264,6 +269,9 @@ public class SaveDBUtil {
 	 */
 	public static int saveGradesDB(Context context, String stuCode, String etChengji, int resultState, String code,
 			String tvTitle) {
+		SharedPreferences mSharedPreferences = context.getSharedPreferences("ipAddress", Activity.MODE_PRIVATE);
+		// 获取IMEI码
+		String IMEI = mSharedPreferences.getString("IMEI", "0");
 		int RoundNo = 1;
 		String itemCode = "";
 		if (tvTitle.equals("身高") || tvTitle.equals("体重") || tvTitle.equals("1000米跑") || tvTitle.equals("800米跑")
@@ -276,15 +284,17 @@ public class SaveDBUtil {
 			// itemID =
 			// DbService.getInstance(context).queryItemByMachineCode(code).getItemID();
 		}
-
-		// long stuID =
-		// DbService.getInstance(context).queryStudentByCode(stuCode).get(0).getStudentID();
+		Long studentItemID;
 		StudentItem studentItems = DbService.getInstance(context).queryStudentItemByCode(stuCode, itemCode);
 		if (studentItems == null) {
-			return 0;
+			studentItemID = null;
+		} else {
+			studentItemID = studentItems.getStudentItemID();
 		}
-		Long studentItemID = studentItems.getStudentItemID();
-		List<RoundResult> round = DbService.getInstance(context).queryRoundResultByID(studentItemID);
+		// List<RoundResult> round =
+		// DbService.getInstance(context).queryRoundResultByID(studentItemID);
+		List<RoundResult> round = DbService.getInstance(context).queryRoundResultByCode(stuCode, itemCode);
+
 		List<Integer> rounds = new ArrayList<>();
 
 		if (round.size() != 0) {
@@ -302,9 +312,9 @@ public class SaveDBUtil {
 		String currentTime = formatter.format(curDate);
 		Log.i("currentTime--->", currentTime);
 		// 存储当前测试轮次
-//		String macAddress = NetUtil.getLocalMacAddressFromWifiInfo(context);
+		// String macAddress = NetUtil.getLocalMacAddressFromWifiInfo(context);
 		RoundResult roundResult = new RoundResult(null, studentItemID, stuCode, itemCode, currentResult, RoundNo,
-				currentTime, resultState, 0, SplashScreenActivity.IMEI, null, null);
+				currentTime, resultState, 0, IMEI, null, null);
 		DbService.getInstance(context).saveRoundResult(roundResult);
 
 		return 1;
@@ -313,13 +323,18 @@ public class SaveDBUtil {
 
 	public static int saveWhGrades(Context context, String stuCode, int hResult, int wResult, int resultState,
 			String hItemCode, String wItemCode, int sex) {
+		SharedPreferences mSharedPreferences = context.getSharedPreferences("ipAddress", Activity.MODE_PRIVATE);
+		// 获取IMEI码
+		String IMEI = mSharedPreferences.getString("IMEI", "0");
 		int RoundNo = 1;
-		StudentItem studentItems = DbService.getInstance(context).queryStudentItemByCode(stuCode, "E01");
-
-		if (studentItems == null) {
-			return 0;
-		}
-		List<WhRoundResult> round = DbService.getInstance(context).queryWhRoundResultByID(stuCode);
+		// StudentItem studentItems =
+		// DbService.getInstance(context).queryStudentItemByCode(stuCode,
+		// "E01");
+		//
+		// if (studentItems == null) {
+		// return 0;
+		// }
+		List<WhRoundResult> round = DbService.getInstance(context).queryWhRoundResultByCode(stuCode);
 		List<Integer> rounds = new ArrayList<>();
 
 		if (round.size() != 0) {
@@ -336,7 +351,7 @@ public class SaveDBUtil {
 		String currentTime = formatter.format(curDate);
 		Log.i("currentTime--->", currentTime);
 		WhRoundResult whRoundResult = new WhRoundResult(null, stuCode, null, sex, hItemCode, wItemCode, hResult,
-				wResult, RoundNo, currentTime, resultState, SplashScreenActivity.IMEI);
+				wResult, RoundNo, currentTime, resultState, IMEI);
 		// 存储当前测试轮次
 		DbService.getInstance(context).saveWhRoundResult(whRoundResult);
 		return 1;

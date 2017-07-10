@@ -7,13 +7,15 @@ public class QueryResultInfo {
 	private String ItemCode;
 	private int LastResult;
 	private String StudentCode;
+	private String stuYear; // 学年 例如：2014-2015学年
+	private String isCurYear; // 是否当前学年 0为否，1为是
 
 	public QueryResultInfo() {
 		// TODO Auto-generated constructor stub
 	}
 
 	public QueryResultInfo(int resultState, int studentItemID, String lastTestTime, String itemCode, int lastResult,
-			String studentCode) {
+			String studentCode, String stuYear, String isCurYear) {
 		super();
 		ResultState = resultState;
 		StudentItemID = studentItemID;
@@ -21,6 +23,8 @@ public class QueryResultInfo {
 		ItemCode = itemCode;
 		LastResult = lastResult;
 		StudentCode = studentCode;
+		this.stuYear = stuYear;
+		this.isCurYear = isCurYear;
 	}
 
 	public int getResultState() {
@@ -71,11 +75,27 @@ public class QueryResultInfo {
 		StudentCode = studentCode;
 	}
 
+	public String getStuYear() {
+		return stuYear;
+	}
+
+	public void setStuYear(String stuYear) {
+		this.stuYear = stuYear;
+	}
+
+	public String getIsCurYear() {
+		return isCurYear;
+	}
+
+	public void setIsCurYear(String isCurYear) {
+		this.isCurYear = isCurYear;
+	}
+
 	@Override
 	public String toString() {
 		return "QueryResultInfo [ResultState=" + ResultState + ", StudentItemID=" + StudentItemID + ", LastTestTime="
 				+ LastTestTime + ", ItemCode=" + ItemCode + ", LastResult=" + LastResult + ", StudentCode="
-				+ StudentCode + "]";
+				+ StudentCode + ", stuYear=" + stuYear + ", isCurYear=" + isCurYear + "]";
 	}
 
 }

@@ -28,6 +28,8 @@ import android.os.Handler;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
@@ -68,6 +70,8 @@ public class RunGradeActivity extends NFCActivity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		Window window = getWindow();
+		window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 		setContentView(R.layout.activity_run_grade);
 		context = this;
 
@@ -84,6 +88,9 @@ public class RunGradeActivity extends NFCActivity {
 
 	@Override
 	protected void onNewIntent(Intent intent) {
+		if (dialog != null && dialog.isShowing()) {
+			dialog.dismiss();
+		}
 		writeCard(intent);
 		// readCard(intent);
 	}
@@ -111,6 +118,7 @@ public class RunGradeActivity extends NFCActivity {
 	 * @param intent
 	 */
 	private List<String> stuCodes = new ArrayList<>();
+	private AlertDialog dialog;
 
 	private void writeCard(Intent intent) {
 
@@ -132,7 +140,7 @@ public class RunGradeActivity extends NFCActivity {
 				for (int i = 0; i < ChengjiAdapter.datas.size(); i++) {
 					final int j = i;
 					if (student.getStuCode().equals(ChengjiAdapter.datas.get(i).getStuCode())) {
-						new AlertDialog.Builder(RunGradeActivity.this).setTitle("当前IC卡已有成绩，是否覆盖？")
+						dialog = new AlertDialog.Builder(RunGradeActivity.this).setTitle("当前IC卡已有成绩，是否覆盖？")
 								.setMessage("温馨提示：此操作时请不要移开IC卡以防写卡失败！").setPositiveButton("否", null)
 								.setNegativeButton("是", new DialogInterface.OnClickListener() {
 
@@ -187,7 +195,7 @@ public class RunGradeActivity extends NFCActivity {
 		String time = runGrades.get(currentPosition).getTime();
 		int result1 = Integer.parseInt(time.subSequence(0, 2).toString()) * 60 * 1000
 				+ Integer.parseInt(time.subSequence(3, 5).toString()) * 1000
-				+ Integer.parseInt(time.substring(6, 9).toString());
+				+ Integer.parseInt(time.substring(6, 8).toString())*10;
 		IC_Result[] result = new IC_Result[4];
 		result[0] = new IC_Result(result1, 1, 0, 0);// 成绩1
 		IC_ItemResult ItemResult = new IC_ItemResult(code, 0, 0, result);
@@ -258,10 +266,10 @@ public class RunGradeActivity extends NFCActivity {
 							@Override
 							public void onClick(DialogInterface dialog, int which) {
 								datas = ChengjiAdapter.datas;
-								if (DbService.getInstance(context).getStudentItemsCount() == 0) {
-									NetUtil.showToast(context, "相关数据未下载，不能保存");
-									return;
-								}
+//								if (DbService.getInstance(context).getStudentItemsCount() == 0) {
+//									NetUtil.showToast(context, "相关数据未下载，不能保存");
+//									return;
+//								}
 								if (title.equals("50米跑")) {
 									for (RunGrade runGrade : datas) {
 										if (!runGrade.getName().isEmpty()) {
@@ -269,7 +277,7 @@ public class RunGradeActivity extends NFCActivity {
 													runGrade.getTime().subSequence(0, 2).toString()) * 60 * 1000
 													+ Integer.parseInt(runGrade.getTime().subSequence(3, 5).toString())
 															* 1000
-													+ Integer.parseInt(runGrade.getTime().substring(6, 9).toString());
+													+ Integer.parseInt(runGrade.getTime().substring(6, 8).toString())*10;
 											SaveDBUtil.saveGradesDB(context, runGrade.getStuCode(), result + "", 0,
 													Constant.RUN50 + "", "50米跑");
 										}
@@ -282,7 +290,7 @@ public class RunGradeActivity extends NFCActivity {
 													runGrade.getTime().subSequence(0, 2).toString()) * 60 * 1000
 													+ Integer.parseInt(runGrade.getTime().subSequence(3, 5).toString())
 															* 1000
-													+ Integer.parseInt(runGrade.getTime().substring(6, 9).toString());
+													+ Integer.parseInt(runGrade.getTime().substring(6, 8).toString())*10;
 											String proName = null;
 											if (runGrade.getSex() == 1) {
 												proName = "1000米跑";
@@ -300,7 +308,7 @@ public class RunGradeActivity extends NFCActivity {
 													runGrade.getTime().subSequence(0, 2).toString()) * 60 * 1000
 													+ Integer.parseInt(runGrade.getTime().subSequence(3, 5).toString())
 															* 1000
-													+ Integer.parseInt(runGrade.getTime().substring(6, 9).toString());
+													+ Integer.parseInt(runGrade.getTime().substring(6, 8).toString())*10;
 											SaveDBUtil.saveGradesDB(context, runGrade.getStuCode(), result + "", 0,
 													Constant.SHUTTLE_RUN + "", "50米x8往返跑");
 										}

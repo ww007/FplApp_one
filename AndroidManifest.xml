@@ -217,8 +217,7 @@
 
                 <category android:name="android.intent.category.HOME" />
             </intent-filter>
-        </receiver>
-        -->
+        </receiver>        -->
         <activity
             android:name="com.fpl.myapp.activity.manage.ProjectManagerActivity"
             android:label="@string/title_activity_project_manager" >

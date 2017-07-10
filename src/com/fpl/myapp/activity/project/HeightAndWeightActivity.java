@@ -10,6 +10,7 @@ import com.fpl.myapp.base.NFCActivity;
 import com.fpl.myapp.db.DbService;
 import com.fpl.myapp.db.SaveDBUtil;
 import com.fpl.myapp.util.Constant;
+import com.fpl.myapp.util.HttpUtil;
 import com.fpl.myapp.util.NetUtil;
 import com.wnb.android.nfc.dataobject.entity.IC_ItemResult;
 import com.wnb.android.nfc.dataobject.entity.IC_Result;
@@ -39,7 +40,6 @@ import ww.greendao.dao.StudentItem;
 
 public class HeightAndWeightActivity extends NFCActivity {
 
-	private TextView tvNumber;
 	private TextView tvGender;
 	private TextView tvName;
 	private TextView tvShow1;
@@ -91,22 +91,31 @@ public class HeightAndWeightActivity extends NFCActivity {
 				etWeight.setEnabled(false);
 				break;
 			case 3:
-				NetUtil.showToast(context, "请先下载相关数据");
+				NetUtil.showToast(context, "当前卡片无此项目");
 				tvShow.setText("请刷卡");
 				etHeight.setEnabled(false);
 				etWeight.setEnabled(false);
+				break;
+			case 4:
+				NetUtil.showToast(context, "条码识别不出，请手动输入");
 				break;
 			default:
 				break;
 			}
 		};
 	};
+	private IC_ItemResult item;
+	private EditText tvNumber;
+	private Button btnGetStu;
+
+	public static Activity mActivity;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_height_and_weight);
 		context = this;
+		mActivity = this;
 
 		mSharedPreferences = getSharedPreferences("readStyles", Activity.MODE_PRIVATE);
 		readStyle = mSharedPreferences.getInt("readStyle", 0);
@@ -114,10 +123,11 @@ public class HeightAndWeightActivity extends NFCActivity {
 		stuData = getIntent().getStringExtra("data");
 		if (stuData != null && stuData.length() != 0) {
 			stuByCode = DbService.getInstance(context).queryStudentByCode(stuData);
-			Log.i("stuByCode", stuByCode.size() + "-" + stuByCode.get(0).toString());
 			if (stuByCode.isEmpty()) {
-				Toast.makeText(context, "查无此人", Toast.LENGTH_SHORT).show();
-				stuData = "";
+				if (!stuData.equals("扫码时间过长")) {
+					Toast.makeText(context, "查无此人", Toast.LENGTH_SHORT).show();
+					stuData = "";
+				}
 			} else {
 				String itemCode = DbService.getInstance(context).queryItemByMachineCode2(Constant.HEIGHT_WEIGHT + "")
 						.get(0).getItemCode();
@@ -168,7 +178,6 @@ public class HeightAndWeightActivity extends NFCActivity {
 			IItemService itemService = new NFCItemServiceImpl(intent);
 			student = itemService.IC_ReadStuInfo();
 			log.info("身高体重读卡->" + student.toString());
-
 			if (1 == student.getSex()) {
 				sex = "男";
 			} else {
@@ -177,23 +186,37 @@ public class HeightAndWeightActivity extends NFCActivity {
 			tvGender.setText(sex);
 			tvName.setText(student.getStuName().toString());
 			tvNumber.setText(student.getStuCode().toString());
-
-			if (DbService.getInstance(context).loadAllItem().isEmpty()
-					|| DbService.getInstance(context).getStudentsCount() == 0) {
-				mHandler.sendEmptyMessage(3);
-				return;
-			}
-			String itemCode = DbService.getInstance(context).queryItemByMachineCode2(Constant.HEIGHT_WEIGHT + "").get(0)
-					.getItemCode();
-			studentItems = DbService.getInstance(context).queryStudentItemByCode(student.getStuCode(), itemCode);
-			if (studentItems == null) {
-				mHandler.sendEmptyMessage(2);
+			
+			item = itemService.IC_ReadItemResult(Constant.HEIGHT_WEIGHT);
+			
+			String heightResult = "";
+			String weightResult = "";
+			if (item.getResult()[0].getResultVal() == 0) {
+				heightResult = "";
+				weightResult = "";
+				btnCancel.setVisibility(View.GONE);
+				btnSave.setVisibility(View.GONE);
 			} else {
-				initOne();
+				heightResult = item.getResult()[0].getResultVal() / 10.0 + "";
+				weightResult = item.getResult()[2].getResultVal() / 1000.0 + "";
+				btnCancel.setVisibility(View.VISIBLE);
+				btnSave.setVisibility(View.VISIBLE);
 			}
+
+			etHeight.setText(heightResult);
+			etHeight.setSelection(etHeight.getText().length());
+			etWeight.setText(weightResult);
+			etWeight.setSelection(etWeight.getText().length());
+			tvShow1.setVisibility(View.GONE);
+			etHeight.setEnabled(true);
+			etWeight.setEnabled(true);
+
+			tvShow.setText("请输入");
+			tvShow.setVisibility(View.VISIBLE);
 
 		} catch (Exception e) {
 			log.error("身高体重读卡失败");
+			mHandler.sendEmptyMessage(3);
 			e.printStackTrace();
 		}
 
@@ -256,7 +279,8 @@ public class HeightAndWeightActivity extends NFCActivity {
 		tvLeft = (TextView) findViewById(R.id.tv_hw_height);
 		tvRight = (TextView) findViewById(R.id.tv_hw_weight);
 		tvTitle = (TextView) findViewById(R.id.tv_hw_title);
-		tvNumber = (TextView) findViewById(R.id.tv_number_edit_HW);
+		tvNumber = (EditText) findViewById(R.id.et_number_edit_HW);
+		btnGetStu = (Button) findViewById(R.id.btn_hw_getstus);
 		tvGender = (TextView) findViewById(R.id.tv_gender_edit_HW);
 		tvName = (TextView) findViewById(R.id.tv_name_edit_HW);
 		tvShow1 = (TextView) findViewById(R.id.tv_hw_show1);
@@ -295,9 +319,20 @@ public class HeightAndWeightActivity extends NFCActivity {
 			btnScan.setVisibility(View.VISIBLE);
 			tvShow.setVisibility(View.GONE);
 		}
-		if ("".equals(tvNumber.getText().toString())) {
+		if (tvNumber.getText().toString().isEmpty()) {
 			stuData = "";
+			tvNumber.setEnabled(false);
+			btnGetStu.setVisibility(View.GONE);
+		} else if (tvNumber.getText().toString().equals("扫码时间过长")) {
+			tvNumber.setText("");
+			tvNumber.setEnabled(true);
+			btnGetStu.setVisibility(View.VISIBLE);
+			mHandler.sendEmptyMessage(4);
 		} else {
+			tvNumber.setEnabled(false);
+			tvNumber.setFocusableInTouchMode(false);
+			tvNumber.setFocusable(false);
+			btnGetStu.setVisibility(View.GONE);
 			if (stuByCode.get(0).getSex() == 1) {
 				sex = "男";
 			} else {
@@ -308,7 +343,7 @@ public class HeightAndWeightActivity extends NFCActivity {
 			etHeight.setEnabled(true);
 			etWeight.setEnabled(true);
 			btnScan.setVisibility(View.GONE);
-			tvShow.setText("请输入");
+			tvShow.setText("请输入成绩");
 			tvShow.setVisibility(View.VISIBLE);
 			initOne();
 		}
@@ -326,13 +361,49 @@ public class HeightAndWeightActivity extends NFCActivity {
 	}
 
 	private void setListener() {
+		btnGetStu.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				if (tvNumber.getText().toString().trim().isEmpty()) {
+					NetUtil.showToast(context, "学号为空");
+				} else {
+					List<ww.greendao.dao.Student> getstu = DbService.getInstance(context)
+							.queryStudentByCode(tvNumber.getText().toString().trim());
+					if (getstu.isEmpty()) {
+						NetUtil.showToast(context, "查无此人");
+						etHeight.setEnabled(false);
+						etWeight.setEnabled(false);
+					} else {
+						tvNumber.setEnabled(false);
+						tvNumber.setFocusableInTouchMode(false);
+						tvNumber.setFocusable(false);
+						btnGetStu.setVisibility(View.GONE);
+						if (getstu.get(0).getSex() == 1) {
+							sex = "男";
+						} else {
+							sex = "女";
+						}
+						tvName.setText(getstu.get(0).getStudentName());
+						tvGender.setText(sex);
+						etHeight.setEnabled(true);
+						etWeight.setEnabled(true);
+						etHeight.setFocusable(true);
+						btnScan.setVisibility(View.GONE);
+						tvShow.setText("请输入成绩");
+						tvShow.setVisibility(View.VISIBLE);
+						initOne();
+					}
+				}
+			}
+		});
+
 		btnScan.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				Intent intent = new Intent(HeightAndWeightActivity.this, CaptureActivity.class);
 				intent.putExtra("className", Constant.HEIGHT_WEIGHT + "");
 				startActivity(intent);
-				finish();
 			}
 		});
 
@@ -388,7 +459,7 @@ public class HeightAndWeightActivity extends NFCActivity {
 			@Override
 			public void onClick(View v) {
 				if (DbService.getInstance(context).loadAllItem().isEmpty()) {
-					Toast.makeText(context, "请先获取项目相关数据", Toast.LENGTH_SHORT).show();
+					Toast.makeText(context, "请先初始化数据", Toast.LENGTH_SHORT).show();
 					return;
 				}
 				if ("".equals(etHeight.getText().toString()) || "".equals(etWeight.getText().toString())) {
@@ -403,70 +474,121 @@ public class HeightAndWeightActivity extends NFCActivity {
 						etWeight.setText("");
 						return;
 					}
-					// String itemCode =
-					// DbService.getInstance(context).queryItemByName("身高").getItemCode();
-					// studentItems =
-					// DbService.getInstance(context).queryStudentItemByCode(tvNumber.getText().toString(),
-					// itemCode);
-					if (studentItems == null) {
-						Toast.makeText(context, "当前学生项目不存在", Toast.LENGTH_SHORT).show();
-					} else {
-						int hResult = (int) (Double.parseDouble(etHeight.getText().toString()) * 10);
-						int wResult = (int) (Double.parseDouble(etWeight.getText().toString()) * 1000);
-						// 保存身高体重
-						// int flag1 = SaveDBUtil.saveGradesDB(context,
-						// tvNumber.getText().toString(), hResult + "", 0,
-						// Constant.HEIGHT_WEIGHT + "", "身高");
-						// int flag2 = SaveDBUtil.saveGradesDB(context,
-						// tvNumber.getText().toString(), wResult + "", 0,
-						// Constant.HEIGHT_WEIGHT + "", "体重");
+					List<ww.greendao.dao.Student> students = DbService.getInstance(context)
+							.queryStudentByCode(tvNumber.getText().toString());
+					if (students.isEmpty()) {
 						int currentSex;
-						if (stuData != null && stuData.length() != 0) {
-							currentSex = stuByCode.get(0).getSex();
+						if (tvGender.getText().toString().equals("男")) {
+							currentSex = 1;
 						} else {
-							currentSex = student.getSex();
+							currentSex = 2;
 						}
-						int flag = SaveDBUtil.saveWhGrades(context, tvNumber.getText().toString(), hResult, wResult, 0,
-								"E01", "E02", currentSex);
-
-						btnCancel.setVisibility(View.GONE);
-						btnSave.setVisibility(View.GONE);
-						tvShow1.setVisibility(View.VISIBLE);
-						if (readStyle == 1) {
-							tvShow.setVisibility(View.GONE);
-						} else {
-							tvShow.setVisibility(View.VISIBLE);
-						}
-						if (flag == 1) {
-							if (stuData.isEmpty()) {
-								tvShow1.setText("保存成功");
-								tvShow.setVisibility(View.VISIBLE);
-								tvShow.setText("请刷卡");
-							} else {
-								tvShow.setVisibility(View.GONE);
-								tvShow1.setVisibility(View.GONE);
-								etHeight.setText("");
-								etWeight.setText("");
-								Toast.makeText(context, "保存成功", Toast.LENGTH_SHORT).show();
-								btnCancel.setVisibility(View.GONE);
-								btnSave.setVisibility(View.GONE);
-								btnScan.setVisibility(View.VISIBLE);
-							}
-						} else {
-							if (stuData.isEmpty()) {
-								tvShow1.setText("保存失败");
-								tvShow.setVisibility(View.VISIBLE);
-								tvShow.setText("请刷卡");
-							} else {
-								tvShow1.setVisibility(View.GONE);
-								Toast.makeText(context, "保存失败！", Toast.LENGTH_SHORT).show();
-								btnCancel.setVisibility(View.GONE);
-								btnSave.setVisibility(View.GONE);
-								tvShow.setVisibility(View.GONE);
-								btnScan.setVisibility(View.VISIBLE);
-							}
+						ww.greendao.dao.Student currentStu = new ww.greendao.dao.Student(null,
+								tvNumber.getText().toString(), tvName.getText().toString(), currentSex, null, null,
+								null, null, HttpUtil.getCurrentTime(), null, null, null);
+						DbService.getInstance(context).saveStudent(currentStu);
+					} else {
+						List<StudentItem> stuItems = DbService.getInstance(context)
+								.queryStudentItemBystuCode(tvNumber.getText().toString());
+						String itemCode = DbService.getInstance(context).queryItemByName("身高").getItemCode();
+						studentItems = DbService.getInstance(context)
+								.queryStudentItemByCode(tvNumber.getText().toString(), itemCode);
+						if ((!stuItems.isEmpty()) && studentItems == null) {
+							Toast.makeText(context, "当前学生项目不存在", Toast.LENGTH_SHORT).show();
+							return;
 						}
 					}
+
+					int hResult = (int) (Double.parseDouble(etHeight.getText().toString()) * 10);
+					int wResult = (int) (Double.parseDouble(etWeight.getText().toString()) * 1000);
+					// 保存身高体重
+					// int flag1 = SaveDBUtil.saveGradesDB(context,
+					// tvNumber.getText().toString(), hResult + "", 0,
+					// Constant.HEIGHT_WEIGHT + "", "身高");
+					// int flag2 = SaveDBUtil.saveGradesDB(context,
+					// tvNumber.getText().toString(), wResult + "", 0,
+					// Constant.HEIGHT_WEIGHT + "", "体重");
+					int currentSex;
+					if (tvGender.getText().toString().equals("男")) {
+						currentSex = 1;
+					} else {
+						currentSex = 2;
+					}
+					// if (stuData != null && stuData.length() != 0 &&
+					// !stuData.equals("扫码时间过长")) {
+					// currentSex = stuByCode.get(0).getSex();
+					// } else {
+					// currentSex = student.getSex();
+					// }
+					int flag = SaveDBUtil.saveWhGrades(context, tvNumber.getText().toString(), hResult, wResult, 0,
+							"E01", "E02", currentSex);
+
+					btnCancel.setVisibility(View.GONE);
+					btnSave.setVisibility(View.GONE);
+					tvShow1.setVisibility(View.VISIBLE);
+					if (readStyle == 1) {
+						tvShow.setVisibility(View.GONE);
+					} else {
+						tvShow.setVisibility(View.VISIBLE);
+					}
+					if (flag == 1) {
+						if (stuData.isEmpty()) {
+							tvShow1.setText("保存成功");
+							tvShow.setVisibility(View.VISIBLE);
+							tvShow.setText("请刷卡");
+						} else {
+							tvShow.setVisibility(View.GONE);
+							tvShow1.setVisibility(View.GONE);
+							etHeight.setText("");
+							etWeight.setText("");
+							Toast.makeText(context, "保存成功", Toast.LENGTH_SHORT).show();
+							btnCancel.setVisibility(View.GONE);
+							btnSave.setVisibility(View.GONE);
+							btnScan.setVisibility(View.VISIBLE);
+						}
+					} else {
+						if (stuData.isEmpty()) {
+							tvShow1.setText("保存失败");
+							tvShow.setVisibility(View.VISIBLE);
+							tvShow.setText("请刷卡");
+						} else {
+							tvShow1.setVisibility(View.GONE);
+							Toast.makeText(context, "保存失败！", Toast.LENGTH_SHORT).show();
+							btnCancel.setVisibility(View.GONE);
+							btnSave.setVisibility(View.GONE);
+							tvShow.setVisibility(View.GONE);
+							btnScan.setVisibility(View.VISIBLE);
+						}
+					}
+				}
+			}
+		});
+
+		etWeight.addTextChangedListener(new TextWatcher() {
+			@Override
+			public void onTextChanged(CharSequence s, int start, int before, int count) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void afterTextChanged(Editable s) {
+				if (tvNumber.getText().toString().isEmpty() || etWeight.getText().toString().isEmpty()) {
+					if (readStyle != 1) {
+						tvShow.setVisibility(View.VISIBLE);
+					}
+					btnCancel.setVisibility(View.GONE);
+					btnSave.setVisibility(View.GONE);
+				} else {
+					tvShow.setVisibility(View.GONE);
+					btnCancel.setVisibility(View.VISIBLE);
+					btnSave.setVisibility(View.VISIBLE);
 				}
 			}
 		});

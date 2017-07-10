@@ -45,7 +45,9 @@ public interface Constant {
 	public static final String ROUND_RESULT_SAVE_URL = "/sys_tccx/phone/RoundResult/savePage.action";
 	public static final String ROUND_RESULT_SAVEWH_URL = "/sys_tccx/phone/RoundResult/saveWHPage.action";
 	public static final String GET_RESULT_FOR_STUCODE = "/sys_tccx/phone/StuItem/getStuItemsByStuCode.action";
+	public static final String GET_HisRESULT_FOR_STUCODE = "/sys_tccx/phone/StuItem/getHisResultByStuCode.action";
 	public static final String GET_PASSWORD = "/sys_tccx/phone/equipment/setPassword.action";
+	public static final String GET_STATE = "/sys_tccx/phone/equipment/getState.action";
 
 	public static final String TOKEN = "fpl@*!";
 
@@ -77,7 +79,7 @@ public interface Constant {
 	public static String HELP_3 = "3.“项目选择”界面可按F1键选择“IC卡”和“条形码”两种模式";
 	public static String HELP_4 = "4.“计算机联机”可按F1键输入上传地址";
 	public static String HELP_5 = "5.“成绩查询”有联网查询和IC卡读取两种方式";
-	public static String HELP_6 = "6.这是2.0版本";
+	public static String HELP_6 = "6.扫码中可按物理键“SCAN”开启闪光灯提高灵敏度";
 	public static String HELP_7 = "使用本系统必须先下载相关数据";
 	public static String HELP_8 = "使用本系统必须先下载相关数据";
 	public static String HELP_9 = "使用本系统必须先下载相关数据";

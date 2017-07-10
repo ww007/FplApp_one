@@ -94,15 +94,30 @@
             android:textSize="20sp"
             tools:ignore="RtlHardcoded" />
 
-        <TextView
-            android:id="@+id/tv_number_edit_HW"
+        <EditText
+            android:id="@+id/et_number_edit_HW"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignBaseline="@+id/tv_hw_number"
             android:layout_alignBottom="@+id/tv_hw_number"
             android:layout_toRightOf="@+id/tv_hw_number"
+            android:minEms="6"
+            android:singleLine="true"
             android:text="123456789011"
             android:textSize="20sp" />
+
+        <Button
+            android:id="@+id/btn_hw_getstus"
+            android:layout_width="50dp"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@+id/tv_hw_number"
+            android:layout_alignTop="@+id/tv_hw_number"
+            android:layout_marginLeft="5dp"
+            android:layout_toRightOf="@+id/et_number_edit_HW"
+            android:background="@drawable/circle_corner_button_selector"
+            android:text="搜索"
+            android:textColor="#ffffff"
+            android:textSize="15sp" />
 
         <TextView
             android:id="@+id/tv_gender_edit_HW"
@@ -178,9 +193,9 @@
             android:layout_above="@+id/tv_line1"
             android:layout_toRightOf="@+id/tv_hw_height"
             android:gravity="center"
+            android:inputType="numberDecimal"
             android:minEms="3"
             android:singleLine="true"
-            android:inputType="numberDecimal"
             android:text="178"
             android:textSize="20sp" />
 
@@ -192,8 +207,8 @@
             android:layout_toRightOf="@+id/tv_hw_weight"
             android:ems="10"
             android:gravity="center"
-            android:minEms="3"
             android:inputType="numberDecimal"
+            android:minEms="3"
             android:singleLine="true"
             android:text="70"
             android:textSize="20sp" />

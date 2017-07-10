@@ -11,6 +11,7 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
@@ -34,7 +35,8 @@ public class SplashScreenActivity extends Activity {
 	public static ProgressBar pbSplash;
 	public static Activity mActivity = null;
 	private int REQUEST_PHONE_STATE = 0;
-	public static String IMEI;
+	private SharedPreferences mSharedPreferences;
+	public String IMEI;
 	public static Handler mHandle = new Handler() {
 		public void handleMessage(android.os.Message msg) {
 			switch (msg.what) {
@@ -69,6 +71,11 @@ public class SplashScreenActivity extends Activity {
 		}
 
 		Log.i("IMEI=", IMEI + "");
+		mSharedPreferences = this.getSharedPreferences("ipAddress", Activity.MODE_PRIVATE);
+		SharedPreferences.Editor editor = mSharedPreferences.edit();
+		editor.putString("IMEI", IMEI);
+		editor.commit();
+
 		pbSplash = (ProgressBar) findViewById(R.id.pb_splash);
 		// 调用NetUtil中的网络判断方法
 		boolean result = NetUtil.netState(context);
@@ -86,7 +93,8 @@ public class SplashScreenActivity extends Activity {
 
 	private void isWifiConnected(boolean result) {
 		if (true == result) {
-			manager.compareVersion(context);
+			// manager.compareVersion(context);
+			handlePost(2000);
 		} else {
 			handlePost(2000);
 		}

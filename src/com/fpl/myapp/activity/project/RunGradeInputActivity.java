@@ -22,6 +22,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -43,7 +44,6 @@ public class RunGradeInputActivity extends NFCActivity {
 	private TextView tvInfoTitle;
 	private TextView tvName;
 	private TextView tvGender;
-	private TextView tvNumber;
 	private TextView tvShow1;
 	private TextView tvShow;
 	private EditText etMax;
@@ -86,20 +86,82 @@ public class RunGradeInputActivity extends NFCActivity {
 	private int constant;
 	private int sMax;
 	private int sMin;
+	private Handler mHandler = new Handler() {
+		public void handleMessage(android.os.Message msg) {
+			switch (msg.what) {
+			case 1:
+				etMs.setEnabled(false);
+				etS.setEnabled(false);
+				etSec.setEnabled(false);
+				rb0.setEnabled(false);
+				rb1.setEnabled(false);
+				rb2.setEnabled(false);
+				rb3.setEnabled(false);
+				btnScan.setVisibility(View.VISIBLE);
+				tvShow.setText("");
+				break;
+			case 2:
+				NetUtil.showToast(context, "请先下载相关数据");
+				rb0.setEnabled(false);
+				rb1.setEnabled(false);
+				rb2.setEnabled(false);
+				rb3.setEnabled(false);
+				if (readStyle == 0) {
+					tvShow.setText("请刷卡");
+				} else {
+					btnScan.setVisibility(View.VISIBLE);
+					tvShow.setVisibility(View.GONE);
+				}
+				etMs.setEnabled(false);
+				etS.setEnabled(false);
+				etSec.setEnabled(false);
+				break;
+			case 4:
+				NetUtil.showToast(context, "条码识别不出，请手动输入");
+				break;
+			default:
+				break;
+			}
+		};
+	};
+	private List<Item> itemLists;
+	private int grade;
+	private String etmin;
+	private String ets;
+	private String etms;
+	private IC_ItemResult item;
+	private Button btnGetStu;
+	private EditText tvNumber;
+	public static Activity mActivity;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.personal_information);
 		context = this;
+		mActivity = this;
 
 		// 加载配置
 		Intent intent = getIntent();
 		number = intent.getStringExtra("number");
 		name = intent.getStringExtra("name");
 		sex = intent.getStringExtra("sex");
+		grade = intent.getIntExtra("grade", 0);
 		title = intent.getStringExtra("title");
 		title2 = intent.getStringExtra("title2");
+
+		Log.i("grade", "=========" + grade);
+
+		if (grade == 0) {
+			etmin = "";
+			ets = "";
+			etms = "";
+		} else {
+			etmin = grade / 1000 / 60 + "";
+			ets = grade / 1000 % 60 + "";
+			etms = grade % 1000 / 10 + "";
+		}
+
 		if ("".equals(title)) {
 			title = title2;
 		}
@@ -110,27 +172,35 @@ public class RunGradeInputActivity extends NFCActivity {
 		if (stuData != null && stuData.length() != 0) {
 			stuByCode = DbService.getInstance(context).queryStudentByCode(stuData);
 			if (stuByCode.isEmpty()) {
-				Toast.makeText(context, "查无此人", Toast.LENGTH_SHORT).show();
-				stuData = "";
+				if (!stuData.equals("扫码时间过长")) {
+					Toast.makeText(context, "查无此人", Toast.LENGTH_SHORT).show();
+					stuData = "";
+					mHandler.sendEmptyMessage(1);
+				}
 			}
 		}
 
 		if (title.equals("800/1000米跑")) {
 			constant = Constant.MIDDLE_RACE;
-			items = DbService.getInstance(context).queryItemByMachineCodeList(constant + "").get(0);
+			itemLists = DbService.getInstance(context).queryItemByMachineCodeList(constant + "");
+			if (itemLists.isEmpty()) {
+				items = null;
+			} else {
+				items = itemLists.get(0);
+			}
 		} else if (title.equals("50米跑")) {
 			constant = Constant.RUN50;
 			items = DbService.getInstance(context).queryItemByMachineCode(constant + "");
-		} else if (title.equals("50米x8往返跑")) {
+		} else if (title.contains("往返跑")) {
 			constant = Constant.SHUTTLE_RUN;
 			items = DbService.getInstance(context).queryItemByMachineCode(constant + "");
-		} else if (title.equals("篮球运球")) {
+		} else if (title.contains("篮球")) {
 			constant = Constant.BASKETBALL_SKILL;
 			items = DbService.getInstance(context).queryItemByMachineCode(constant + "");
-		} else if (title.equals("足球运球")) {
+		} else if (title.contains("足球")) {
 			constant = Constant.FOOTBALL_SKILL;
 			items = DbService.getInstance(context).queryItemByMachineCode(constant + "");
-		} else if (title.equals("游泳")) {
+		} else if (title.contains("游泳")) {
 			constant = Constant.SWIM;
 			items = DbService.getInstance(context).queryItemByMachineCode(constant + "");
 		}
@@ -185,16 +255,6 @@ public class RunGradeInputActivity extends NFCActivity {
 		int sec = 0;
 		int s = 0;
 		int ms = 0;
-		// if ("".equals(etS.getText().toString()) ||
-		// "DQ".equals(etS.getText().toString())
-		// || "DNF".equals(etS.getText().toString()) ||
-		// "DNS".equals(etS.getText().toString())) {
-		// s = 0;
-		// } else {
-		// if (!title.equals("50米跑")) {
-		// sec = Integer.parseInt(etSec.getText().toString());
-		// }
-		// }
 		if (!title.equals("50米跑")) {
 			if ("".equals(etSec.getText().toString())) {
 				sec = 0;
@@ -213,7 +273,7 @@ public class RunGradeInputActivity extends NFCActivity {
 			ms = Integer.parseInt(etMs.getText().toString());
 		}
 
-		int etChengji = sec * 60 * 1000 + s * 1000 + ms;
+		int etChengji = sec * 60 * 1000 + s * 1000 + ms * 10;
 		Log.i("getChengJi", etChengji + "");
 		return etChengji;
 
@@ -265,6 +325,42 @@ public class RunGradeInputActivity extends NFCActivity {
 			IItemService itemService = new NFCItemServiceImpl(intent);
 			student = itemService.IC_ReadStuInfo();
 			log.info(title + "读卡=>" + student.toString());
+			if (title.equals("800/1000米跑") || title.equals("800米跑") || title.equals("1000米跑")) {
+				item = itemService.IC_ReadItemResult(Constant.MIDDLE_RACE);
+			} else if (title.equals("50米跑")) {
+				item = itemService.IC_ReadItemResult(Constant.RUN50);
+			} else if (title.contains("往返跑")) {
+				item = itemService.IC_ReadItemResult(Constant.SHUTTLE_RUN);
+			} else if (title.contains("篮球")) {
+				item = itemService.IC_ReadItemResult(Constant.BASKETBALL_SKILL);
+			} else if (title.contains("足球")) {
+				item = itemService.IC_ReadItemResult(Constant.FOOTBALL_SKILL);
+			} else if (title.contains("游泳")) {
+				item = itemService.IC_ReadItemResult(Constant.SWIM);
+			}
+
+			int itemResult;
+
+			if (item.getResult()[0].getResultVal() == 0) {
+				itemResult = 0;
+				btnCancel.setVisibility(View.GONE);
+				btnSave.setVisibility(View.GONE);
+			} else {
+				itemResult = item.getResult()[0].getResultVal();
+				btnCancel.setVisibility(View.VISIBLE);
+				btnSave.setVisibility(View.VISIBLE);
+			}
+
+			Log.i("itemResult======", itemResult + "");
+			if (itemResult == 0) {
+				etmin = "";
+				ets = "";
+				etms = "";
+			} else {
+				etmin = itemResult / 1000 / 60 + "";
+				ets = itemResult / 1000 % 60 + "";
+				etms = itemResult % 1000 + "";
+			}
 
 			if (1 == student.getSex()) {
 				sex = "男";
@@ -272,9 +368,17 @@ public class RunGradeInputActivity extends NFCActivity {
 				sex = "女";
 			}
 			tvGender.setText(sex);
+			etMs.setText(etms);
+			etS.setText(ets);
+			etSec.setText(etmin);
 			tvName.setText(student.getStuName().toString());
 			tvNumber.setText(student.getStuCode().toString());
-			initOne();
+			tvNumber.setFocusableInTouchMode(false);
+			tvNumber.setFocusable(false);
+			tvShow1.setVisibility(View.GONE);
+			rb0.setChecked(true);
+			tvShow.setText("请输入成绩");
+			tvShow.setVisibility(View.VISIBLE);
 		} catch (Exception e) {
 			log.error(title + "读卡失败");
 			e.printStackTrace();
@@ -283,9 +387,9 @@ public class RunGradeInputActivity extends NFCActivity {
 	}
 
 	private void initOne() {
-		etMs.setText("");
-		etS.setText("");
-		etSec.setText("");
+		// etMs.setText(etms);
+		// etS.setText(ets);
+		// etSec.setText(etmin);
 		tvShow1.setVisibility(View.GONE);
 		btnCancel.setVisibility(View.GONE);
 		btnSave.setVisibility(View.GONE);
@@ -305,7 +409,8 @@ public class RunGradeInputActivity extends NFCActivity {
 		tvInfoUnit = (TextView) findViewById(R.id.tv_info_unit);
 		tvName = (TextView) findViewById(R.id.tv_name_edit);
 		tvGender = (TextView) findViewById(R.id.tv_gender_edit);
-		tvNumber = (TextView) findViewById(R.id.tv_number_edit);
+		tvNumber = (EditText) findViewById(R.id.et_number_edit);
+		btnGetStu = (Button) findViewById(R.id.btn_person_getstus);
 		tvShow1 = (TextView) findViewById(R.id.tv_infor_show1);
 		tvShow = (TextView) findViewById(R.id.tv_infor_show);
 		tvMs = (TextView) findViewById(R.id.tv_unit_ms);
@@ -330,7 +435,13 @@ public class RunGradeInputActivity extends NFCActivity {
 		rb2.setText("中退");
 		rb3.setText("弃权");
 
-		tvInfoTitle.setText(title);
+		if (title.equals("800/1000米跑") && sex.equals("男")) {
+			tvInfoTitle.setText("1000米跑");
+		} else if (title.equals("800/1000米跑") && sex.equals("女")) {
+			tvInfoTitle.setText("800米跑");
+		} else {
+			tvInfoTitle.setText(title);
+		}
 		tvInfoChengji.setText("成绩");
 		tvInfoUnit.setVisibility(View.VISIBLE);
 		tvInfoUnit.setText("毫秒");
@@ -338,36 +449,86 @@ public class RunGradeInputActivity extends NFCActivity {
 		tvGender.setText(sex);
 		etMax.setText(max);
 		etMin.setText(min);
-		etS.setText("");
-		etMs.setText("");
-		etSec.setText("");
+		etMs.setText(etms);
+		etS.setText(ets);
+		etSec.setText(etmin);
 		btnCancel.setVisibility(View.GONE);
 		btnSave.setVisibility(View.GONE);
 		tvShow.setText("请输入成绩");
 		tvShow1.setVisibility(View.GONE);
+		tvNumber.setText(stuData);
 
 		if (title.equals("50米跑")) {
 			etSec.setVisibility(View.GONE);
 			tvSec.setVisibility(View.GONE);
 		}
 
-		if (readStyle == 1) {
-			tvNumber.setText(stuData);
-			tvShow.setVisibility(View.GONE);
-			if (stuByCode.get(0).getSex() == 1) {
-				sex = "男";
-			} else {
-				sex = "女";
-			}
-			tvName.setText(stuByCode.get(0).getStudentName());
-			tvGender.setText(sex);
-			btnScan.setVisibility(View.GONE);
-			tvShow.setText("请输入成绩");
-			tvShow.setVisibility(View.VISIBLE);
-			initOne();
-		} else {
+		// if (readStyle == 1) {
+		// tvNumber.setText(stuData);
+		// tvShow.setVisibility(View.GONE);
+		// if (stuData == "") {
+		// sex = "";
+		// tvName.setText("");
+		// } else {
+		// if (stuByCode.get(0).getSex() == 1) {
+		// sex = "男";
+		// } else {
+		// sex = "女";
+		// }
+		// tvName.setText(stuByCode.get(0).getStudentName());
+		// }
+		// tvGender.setText(sex);
+		// btnScan.setVisibility(View.GONE);
+		// tvShow.setText("请输入成绩");
+		// tvShow.setVisibility(View.VISIBLE);
+		// initOne();
+		// } else {
+		// tvNumber.setText(number);
+		// stuData = "";
+		// }
+		if (readStyle != 1) {
 			tvNumber.setText(number);
 			stuData = "";
+			btnGetStu.setVisibility(View.GONE);
+			tvNumber.setEnabled(false);
+		} else {
+
+			if (tvNumber.getText().toString().isEmpty()) {
+				stuData = "";
+				tvNumber.setEnabled(false);
+				btnGetStu.setVisibility(View.GONE);
+			} else if (tvNumber.getText().toString().equals("扫码时间过长")) {
+				tvNumber.setText("");
+				tvNumber.setEnabled(true);
+				btnGetStu.setVisibility(View.VISIBLE);
+				mHandler.sendEmptyMessage(4);
+			} else {
+				tvNumber.setEnabled(false);
+				tvNumber.setFocusableInTouchMode(false);
+				tvNumber.setFocusable(false);
+				btnGetStu.setVisibility(View.GONE);
+				if (stuByCode.get(0).getSex() == 1) {
+					sex = "男";
+				} else {
+					sex = "女";
+				}
+				tvName.setText(stuByCode.get(0).getStudentName());
+				tvGender.setText(sex);
+				etS.setEnabled(true);
+				etMs.setEnabled(true);
+				etMin.setEnabled(true);
+				btnScan.setVisibility(View.GONE);
+				tvShow.setText("请输入成绩");
+				tvShow.setVisibility(View.VISIBLE);
+				initOne();
+			}
+		}
+		if (grade == 0) {
+			btnCancel.setVisibility(View.GONE);
+			btnSave.setVisibility(View.GONE);
+		} else {
+			btnCancel.setVisibility(View.VISIBLE);
+			btnSave.setVisibility(View.VISIBLE);
 		}
 	}
 
@@ -384,12 +545,57 @@ public class RunGradeInputActivity extends NFCActivity {
 			intent.putExtra("className", Constant.runGradeInput);
 			intent.putExtra("title2", title);
 			startActivity(intent);
-			finish();
 		}
 		return super.onKeyDown(keyCode, event);
 	}
 
 	private void setListener() {
+		btnGetStu.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				if (tvNumber.getText().toString().trim().isEmpty()) {
+					NetUtil.showToast(context, "学号为空");
+				} else {
+					List<ww.greendao.dao.Student> getstu = DbService.getInstance(context)
+							.queryStudentByCode(tvNumber.getText().toString().trim());
+					if (getstu.isEmpty()) {
+						NetUtil.showToast(context, "查无此人");
+						rb0.setEnabled(false);
+						rb1.setEnabled(false);
+						rb2.setEnabled(false);
+						rb3.setEnabled(false);
+						etS.setEnabled(false);
+						etMs.setEnabled(false);
+						etMin.setEnabled(false);
+					} else {
+						tvNumber.setEnabled(false);
+						tvNumber.setFocusableInTouchMode(false);
+						tvNumber.setFocusable(false);
+						btnGetStu.setVisibility(View.GONE);
+						if (getstu.get(0).getSex() == 1) {
+							sex = "男";
+						} else {
+							sex = "女";
+						}
+						tvName.setText(getstu.get(0).getStudentName());
+						tvGender.setText(sex);
+						etS.setEnabled(true);
+						etMs.setEnabled(true);
+						etMin.setEnabled(true);
+						rb0.setEnabled(true);
+						rb1.setEnabled(true);
+						rb2.setEnabled(true);
+						rb3.setEnabled(true);
+						btnScan.setVisibility(View.GONE);
+						tvShow.setText("请输入成绩");
+						tvShow.setVisibility(View.VISIBLE);
+						initOne();
+					}
+				}
+			}
+		});
+
 		btnScan.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -397,7 +603,6 @@ public class RunGradeInputActivity extends NFCActivity {
 				intent.putExtra("className", Constant.runGradeInput);
 				intent.putExtra("title2", title);
 				startActivity(intent);
-				finish();
 			}
 		});
 
@@ -425,7 +630,13 @@ public class RunGradeInputActivity extends NFCActivity {
 				if (checkedBtn.equals("正常")) {
 					tvMs.setVisibility(View.VISIBLE);
 					tvS.setVisibility(View.VISIBLE);
-					tvSec.setVisibility(View.VISIBLE);
+					if (title.equals("50米跑")) {
+						tvSec.setVisibility(View.GONE);
+					} else {
+						tvSec.setVisibility(View.VISIBLE);
+						etSec.setVisibility(View.VISIBLE);
+					}
+					tvShow.setVisibility(View.VISIBLE);
 					etMs.setVisibility(View.VISIBLE);
 					etS.setVisibility(View.VISIBLE);
 					etS.setText("");
@@ -448,33 +659,48 @@ public class RunGradeInputActivity extends NFCActivity {
 					}
 					chengji = getChengJi();
 				} else if (checkedBtn.equals("犯规")) {
+					if (tvName.getText().toString().isEmpty()) {
+						btnSave.setVisibility(View.GONE);
+						btnCancel.setVisibility(View.GONE);
+					}
 					tvMs.setVisibility(View.GONE);
 					tvS.setVisibility(View.GONE);
 					tvSec.setVisibility(View.GONE);
 					etMs.setVisibility(View.GONE);
 					etSec.setVisibility(View.GONE);
+					btnScan.setVisibility(View.GONE);
 					etS.setText("DQ");
 					etS.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
 					etS.setEnabled(false);
 					etS.setTextSize(23);
 					chengji = 0;
 				} else if (checkedBtn.equals("中退")) {
+					if (tvName.getText().toString().isEmpty()) {
+						btnSave.setVisibility(View.GONE);
+						btnCancel.setVisibility(View.GONE);
+					}
 					tvMs.setVisibility(View.GONE);
 					tvS.setVisibility(View.GONE);
 					tvSec.setVisibility(View.GONE);
 					etMs.setVisibility(View.GONE);
 					etSec.setVisibility(View.GONE);
+					btnScan.setVisibility(View.GONE);
 					etS.setText("DNF");
 					etS.setTextColor(getResources().getColor(android.R.color.darker_gray));
 					etS.setEnabled(false);
 					etS.setTextSize(23);
 					chengji = 0;
 				} else if (checkedBtn.equals("弃权")) {
+					if (tvName.getText().toString().isEmpty()) {
+						btnSave.setVisibility(View.GONE);
+						btnCancel.setVisibility(View.GONE);
+					}
 					tvMs.setVisibility(View.GONE);
 					tvS.setVisibility(View.GONE);
 					tvSec.setVisibility(View.GONE);
 					etMs.setVisibility(View.GONE);
 					etSec.setVisibility(View.GONE);
+					btnScan.setVisibility(View.GONE);
 					etS.setText("DNS");
 					etS.setTextColor(getResources().getColor(android.R.color.darker_gray));
 					etS.setEnabled(false);
@@ -499,8 +725,10 @@ public class RunGradeInputActivity extends NFCActivity {
 
 			@Override
 			public void afterTextChanged(Editable s) {
-				if (tvNumber.getText().toString().isEmpty()) {
-					tvShow.setVisibility(View.VISIBLE);
+				if (tvNumber.getText().toString().isEmpty() || etMs.getText().toString().isEmpty()) {
+					if (readStyle != 1) {
+						tvShow.setVisibility(View.VISIBLE);
+					}
 					btnCancel.setVisibility(View.GONE);
 					btnSave.setVisibility(View.GONE);
 				} else {
@@ -516,7 +744,7 @@ public class RunGradeInputActivity extends NFCActivity {
 			@Override
 			public void onClick(View v) {
 				if (DbService.getInstance(context).loadAllItem().isEmpty()) {
-					Toast.makeText(context, "请先获取项目相关数据", Toast.LENGTH_SHORT).show();
+					Toast.makeText(context, "请先初始化数据", Toast.LENGTH_SHORT).show();
 					return;
 				}
 				// if (getChengJi() == 0 && checkedBtn.equals("正常")) {
@@ -536,7 +764,7 @@ public class RunGradeInputActivity extends NFCActivity {
 						NetUtil.showToast(context, "秒数错误");
 						return;
 					}
-					if (Integer.parseInt(getMs()) > 999) {
+					if (Integer.parseInt(getMs()) > 100) {
 						NetUtil.showToast(context, "毫秒数错误");
 						return;
 					}
@@ -552,57 +780,68 @@ public class RunGradeInputActivity extends NFCActivity {
 				}
 				if (title.equals("50米跑")) {
 					// 查询数据库中保存的该学生项目成绩的轮次
-					String itemCode = DbService.getInstance(context).queryItemByMachineCode(Constant.RUN50 + "")
-							.getItemCode();
-					studentItems = DbService.getInstance(context).queryStudentItemByCode(tvNumber.getText().toString(),
-							itemCode);
-					if (studentItems == null) {
-						Toast.makeText(context, "当前学生项目不存在", Toast.LENGTH_SHORT).show();
-						return;
-					} else {
-						resultState = 0;
-					}
+					// String itemCode =
+					// DbService.getInstance(context).queryItemByMachineCode(Constant.RUN50
+					// + "")
+					// .getItemCode();
+					// studentItems =
+					// DbService.getInstance(context).queryStudentItemByCode(tvNumber.getText().toString(),
+					// itemCode);
+					// if (studentItems == null) {
+					// Toast.makeText(context, "当前学生项目不存在",
+					// Toast.LENGTH_SHORT).show();
+					// return;
+					// } else {
+					// resultState = 0;
+					// }
 					flag = SaveDBUtil.saveGradesDB(context, tvNumber.getText().toString(), chengji + "", resultState,
 							Constant.RUN50 + "", "50米跑");
 					log.info("保存50米跑" + tvNumber.getText().toString() + "成绩：" + chengji);
 				} else if (title.equals("800/1000米跑")) {
 					String itemName;
-					String itemCode;
+					// String itemCode;
 					if (sex.equals("男")) {
 						itemName = "1000米跑";
 					} else {
 						itemName = "800米跑";
 					}
-					itemCode = DbService.getInstance(context).queryItemByName(itemName).getItemCode();
+					// itemCode =
+					// DbService.getInstance(context).queryItemByName(itemName).getItemCode();
 					// 查询数据库中保存的该学生项目成绩的轮次
-					studentItems = DbService.getInstance(context).queryStudentItemByCode(tvNumber.getText().toString(),
-							itemCode);
-					if (studentItems == null) {
-						Toast.makeText(context, "当前学生项目不存在", Toast.LENGTH_SHORT).show();
-						return;
-					} else {
-						resultState = 0;
-					}
+					// studentItems =
+					// DbService.getInstance(context).queryStudentItemByCode(tvNumber.getText().toString(),
+					// itemCode);
+					// if (studentItems == null) {
+					// Toast.makeText(context, "当前学生项目不存在",
+					// Toast.LENGTH_SHORT).show();
+					// return;
+					// } else {
+					// resultState = 0;
+					// }
 					flag = SaveDBUtil.saveGradesDB(context, tvNumber.getText().toString(), chengji + "", resultState,
 							Constant.MIDDLE_RACE + "", itemName);
 					log.info("保存800/1000米跑" + tvNumber.getText().toString() + "成绩：" + chengji);
 				} else if (title.equals("50米x8往返跑")) {
 					// 查询数据库中保存的该学生项目成绩的轮次
-					String itemCode = DbService.getInstance(context).queryItemByMachineCode(Constant.SHUTTLE_RUN + "")
-							.getItemCode();
+					// String itemCode =
+					// DbService.getInstance(context).queryItemByMachineCode(Constant.SHUTTLE_RUN
+					// + "")
+					// .getItemCode();
 					// long stuID =
 					// DbService.getInstance(context).queryStudentByCode(tvNumber.getText().toString()).get(0)
 					// .getStudentID();
 					// long itemID =
 					// DbService.getInstance(context).queryItemByCode(itemCode).getItemID();
-					studentItems = DbService.getInstance(context).queryStudentItemByCode(tvNumber.getText().toString(),
-							itemCode);
-					if (studentItems == null) {
-						Toast.makeText(context, "当前学生项目不存在", Toast.LENGTH_SHORT).show();
-						return;
-					} else {
-						resultState = 0;
-					}
+					// studentItems =
+					// DbService.getInstance(context).queryStudentItemByCode(tvNumber.getText().toString(),
+					// itemCode);
+					// if (studentItems == null) {
+					// Toast.makeText(context, "当前学生项目不存在",
+					// Toast.LENGTH_SHORT).show();
+					// return;
+					// } else {
+					// resultState = 0;
+					// }
 					flag = SaveDBUtil.saveGradesDB(context, tvNumber.getText().toString(), chengji + "", resultState,
 							Constant.SHUTTLE_RUN + "", "50米x8往返跑");
 					log.info("保存50米x8往返跑" + tvNumber.getText().toString() + "成绩：" + chengji);

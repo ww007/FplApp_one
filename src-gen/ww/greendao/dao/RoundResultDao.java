@@ -29,7 +29,7 @@ public class RoundResultDao extends AbstractDao<RoundResult, Long> {
     */
     public static class Properties {
         public final static Property RoundResultID = new Property(0, Long.class, "RoundResultID", true, "ROUND_RESULT_ID");
-        public final static Property StudentItemID = new Property(1, long.class, "StudentItemID", false, "STUDENT_ITEM_ID");
+        public final static Property StudentItemID = new Property(1, Long.class, "StudentItemID", false, "STUDENT_ITEM_ID");
         public final static Property StudentCode = new Property(2, String.class, "studentCode", false, "STUDENT_CODE");
         public final static Property ItemCode = new Property(3, String.class, "itemCode", false, "ITEM_CODE");
         public final static Property Result = new Property(4, Integer.class, "Result", false, "RESULT");
@@ -60,7 +60,7 @@ public class RoundResultDao extends AbstractDao<RoundResult, Long> {
         String constraint = ifNotExists? "IF NOT EXISTS ": "";
         db.execSQL("CREATE TABLE " + constraint + "'ROUND_RESULT' (" + //
                 "'ROUND_RESULT_ID' INTEGER PRIMARY KEY AUTOINCREMENT ," + // 0: RoundResultID
-                "'STUDENT_ITEM_ID' INTEGER NOT NULL ," + // 1: StudentItemID
+                "'STUDENT_ITEM_ID' INTEGER," + // 1: StudentItemID
                 "'STUDENT_CODE' TEXT," + // 2: studentCode
                 "'ITEM_CODE' TEXT," + // 3: itemCode
                 "'RESULT' INTEGER," + // 4: Result
@@ -88,7 +88,11 @@ public class RoundResultDao extends AbstractDao<RoundResult, Long> {
         if (RoundResultID != null) {
             stmt.bindLong(1, RoundResultID);
         }
-        stmt.bindLong(2, entity.getStudentItemID());
+ 
+        Long StudentItemID = entity.getStudentItemID();
+        if (StudentItemID != null) {
+            stmt.bindLong(2, StudentItemID);
+        }
  
         String studentCode = entity.getStudentCode();
         if (studentCode != null) {
@@ -158,7 +162,7 @@ public class RoundResultDao extends AbstractDao<RoundResult, Long> {
     public RoundResult readEntity(Cursor cursor, int offset) {
         RoundResult entity = new RoundResult( //
             cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0), // RoundResultID
-            cursor.getLong(offset + 1), // StudentItemID
+            cursor.isNull(offset + 1) ? null : cursor.getLong(offset + 1), // StudentItemID
             cursor.isNull(offset + 2) ? null : cursor.getString(offset + 2), // studentCode
             cursor.isNull(offset + 3) ? null : cursor.getString(offset + 3), // itemCode
             cursor.isNull(offset + 4) ? null : cursor.getInt(offset + 4), // Result
@@ -177,7 +181,7 @@ public class RoundResultDao extends AbstractDao<RoundResult, Long> {
     @Override
     public void readEntity(Cursor cursor, RoundResult entity, int offset) {
         entity.setRoundResultID(cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0));
-        entity.setStudentItemID(cursor.getLong(offset + 1));
+        entity.setStudentItemID(cursor.isNull(offset + 1) ? null : cursor.getLong(offset + 1));
         entity.setStudentCode(cursor.isNull(offset + 2) ? null : cursor.getString(offset + 2));
         entity.setItemCode(cursor.isNull(offset + 3) ? null : cursor.getString(offset + 3));
         entity.setResult(cursor.isNull(offset + 4) ? null : cursor.getInt(offset + 4));
@@ -214,7 +218,7 @@ public class RoundResultDao extends AbstractDao<RoundResult, Long> {
     }
     
     /** Internal query to resolve the "roundResults" to-many relationship of StudentItem. */
-    public List<RoundResult> _queryStudentItem_RoundResults(long StudentItemID) {
+    public List<RoundResult> _queryStudentItem_RoundResults(Long StudentItemID) {
         synchronized (this) {
             if (studentItem_RoundResultsQuery == null) {
                 QueryBuilder<RoundResult> queryBuilder = queryBuilder();
@@ -248,9 +252,7 @@ public class RoundResultDao extends AbstractDao<RoundResult, Long> {
         int offset = getAllColumns().length;
 
         StudentItem studentItem = loadCurrentOther(daoSession.getStudentItemDao(), cursor, offset);
-         if(studentItem != null) {
-            entity.setStudentItem(studentItem);
-        }
+        entity.setStudentItem(studentItem);
 
         return entity;    
     }
