@@ -534,6 +534,12 @@ public class HttpUtil {
 		return StuItemFlag;
 	}
 
+	/**
+	 * 获取手持机状态
+	 * @param context
+	 * @param ip
+	 * @param iMEI
+	 */
 	public static void getState(final Context context, final String ip, final String iMEI) {
 		new Thread(new Runnable() {
 
@@ -550,6 +556,7 @@ public class HttpUtil {
 				Log.i("stringBuilder=", stringBuilder.toString());
 				Request request = new Request.Builder().url(stringBuilder.toString()).post(RequestBody.create(null, ""))
 						.build();
+				
 				Call call = mOkHttpClient.newCall(request);
 				call.enqueue(new Callback() {
 
@@ -602,16 +609,20 @@ public class HttpUtil {
 					public void onResponse(Call arg0, Response response) throws IOException {
 						result = response.body().string();
 						Log.i("result============", result);
-						List<Password> password = JSON.parseArray("[" + result + "]", Password.class);
-						SharedPreferences mSharedPreferences = context.getSharedPreferences("password",
-								Activity.MODE_PRIVATE);
-						SharedPreferences.Editor editor = mSharedPreferences.edit();
-						if (password.isEmpty()) {
-							SharedpreferencesActivity.mHandler.sendEmptyMessage(1);
-						} else {
-							// SharedpreferencesActivity.mHandler.sendEmptyMessage(2);
-							editor.putString("password", password.get(0).getPassword());
-							editor.commit();
+						try {
+							List<Password> password = JSON.parseArray("[" + result + "]", Password.class);
+							SharedPreferences mSharedPreferences = context.getSharedPreferences("password",
+									Activity.MODE_PRIVATE);
+							SharedPreferences.Editor editor = mSharedPreferences.edit();
+							if (password.isEmpty()) {
+								SharedpreferencesActivity.mHandler.sendEmptyMessage(1);
+							} else {
+								// SharedpreferencesActivity.mHandler.sendEmptyMessage(2);
+								editor.putString("password", password.get(0).getPassword());
+								editor.commit();
+							}
+						} catch (Exception e) {
+							e.printStackTrace();
 						}
 						getState(context, ip, iMEI);
 						// SharedpreferencesActivity.sendItemRequest(ip);

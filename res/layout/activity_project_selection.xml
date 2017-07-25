@@ -1,16 +1,17 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/RelativeLayout1"
+    android:id="@+id/LinearLayout1"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/background"
     android:gravity="center"
+    android:orientation="vertical"
     tools:context="com.fpl.myapp.activity.ProjectSelectionActivity" >
 
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_above="@+id/TextView1"
+        android:layout_height="0dp"
+        android:layout_weight="12"
         android:gravity="center" >
 
         <GridView
@@ -18,19 +19,18 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:listSelector="@android:color/transparent"
-            android:numColumns="3"
-            android:padding="2dp" >
+            android:numColumns="3" >
         </GridView>
-    </LinearLayout>
+    </RelativeLayout>
 
     <TextView
         android:id="@+id/TextView1"
         android:layout_width="match_parent"
-        android:layout_height="25dp"
-        android:layout_alignParentBottom="true"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:gravity="right|bottom"
         android:padding="3dp"
         android:text="@string/fpl"
         android:textColor="#ffffff" />
 
-</RelativeLayout>
+</LinearLayout>

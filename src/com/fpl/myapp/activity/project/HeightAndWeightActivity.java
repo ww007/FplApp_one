@@ -150,8 +150,8 @@ public class HeightAndWeightActivity extends NFCActivity {
 		} else {
 			hMax = items.getMaxValue() / 10 + "";
 			hMin = items.getMinValue() / 10 + "";
-			wMax = items2.getMaxValue() / 1000 + "";
-			wMin = items2.getMinValue() / 1000 + "";
+			wMax = items2.getMaxValue() / 10 + "";
+			wMin = items2.getMinValue() / 10 + "";
 		}
 		initView();
 		setListener();
@@ -159,10 +159,13 @@ public class HeightAndWeightActivity extends NFCActivity {
 
 	@Override
 	public void onNewIntent(Intent intent) {
+		Log.i("11111111111", "");
 		if (readStyle == 0) {
 			if (View.VISIBLE == tvShow1.getVisibility() && "保存成功".equals(tvShow1.getText().toString())) {
+				Log.i("222222222", "");
 				writeCard(intent);
 			} else {
+				Log.i("333333333", "");
 				readCard(intent);
 			}
 		} else {
@@ -198,12 +201,13 @@ public class HeightAndWeightActivity extends NFCActivity {
 				btnSave.setVisibility(View.GONE);
 			} else {
 				heightResult = item.getResult()[0].getResultVal() / 10.0 + "";
-				weightResult = item.getResult()[2].getResultVal() / 1000.0 + "";
+				weightResult = item.getResult()[2].getResultVal() / 10.0 + "";
 				btnCancel.setVisibility(View.VISIBLE);
 				btnSave.setVisibility(View.VISIBLE);
 			}
 
 			etHeight.setText(heightResult);
+			etHeight.requestFocus();
 			etHeight.setSelection(etHeight.getText().length());
 			etWeight.setText(weightResult);
 			etWeight.setSelection(etWeight.getText().length());
@@ -231,7 +235,7 @@ public class HeightAndWeightActivity extends NFCActivity {
 
 		try {
 			int hResult1 = (int) (Double.parseDouble(etHeight.getText().toString()) * 10);
-			int wResult1 = (int) (Double.parseDouble(etWeight.getText().toString()) * 1000);
+			int wResult1 = (int) (Double.parseDouble(etWeight.getText().toString()) * 10);
 			IItemService itemService = new NFCItemServiceImpl(intent);
 			if (itemService.IC_ReadStuInfo().getStuCode().equals(tvNumber.getText().toString())) {
 				IC_Result[] HWresult = new IC_Result[4];

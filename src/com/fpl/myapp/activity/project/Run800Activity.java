@@ -38,6 +38,7 @@ public class Run800Activity extends NFCActivity {
 	private Context context;
 	private TextView tv;
 	private IC_ItemResult item;
+	private TextView tvText;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -73,7 +74,7 @@ public class Run800Activity extends NFCActivity {
 			int itemResult;
 
 			if (item.getResult()[0].getResultVal() == 0) {
-				itemResult =0;
+				itemResult = 0;
 			} else {
 				itemResult = item.getResult()[0].getResultVal();
 			}
@@ -104,6 +105,7 @@ public class Run800Activity extends NFCActivity {
 	private void initView() {
 		btnScan = (Button) findViewById(R.id.btn_run_scanCode);
 		tv = (TextView) findViewById(R.id.tv_run);
+		tvText = (TextView) findViewById(R.id.tv_run_text);
 		tvTitle = (TextView) findViewById(R.id.tv_title_run);
 		tvTitle.setText("800/1000米跑");
 		btnStart = (Button) findViewById(R.id.btn_start);
@@ -115,7 +117,7 @@ public class Run800Activity extends NFCActivity {
 			tv.setVisibility(View.VISIBLE);
 			tv.setText("请扫码");
 			btnStart.setText("扫码");
-//			btnScan.setVisibility(View.VISIBLE);
+			// btnScan.setVisibility(View.VISIBLE);
 		}
 
 	}
@@ -139,7 +141,7 @@ public class Run800Activity extends NFCActivity {
 					intent.putExtra("title", tvTitle.getText().toString());
 					startActivity(intent);
 				} else {
-//					NetUtil.showToast(context, "当前为扫码模式");
+					// NetUtil.showToast(context, "当前为扫码模式");
 					Intent intent1 = new Intent(Run800Activity.this, CaptureActivity.class);
 					intent1.putExtra("className", Constant.MIDDLE_RACE + "");
 					startActivity(intent1);

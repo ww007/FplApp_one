@@ -59,6 +59,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import ww.greendao.dao.Item;
 
 public class ICInformationActivity extends NFCActivity {
 	private ICInfoAdapter mAdapter;
@@ -329,7 +330,12 @@ public class ICInformationActivity extends NFCActivity {
 					readCommon(itemService, Constant.BASKETBALL_SKILL, "ms", "篮球运球");
 					break;
 				case 15:
-					readCommon(itemService, Constant.SHUTTLE_RUN, "ms", "折返跑");
+					Item item = DbService.getInstance(context).queryItemByMachineCode(Constant.SHUTTLE_RUN + "");
+					if (item != null) {
+						readCommon(itemService, Constant.SHUTTLE_RUN, "ms", item.getItemName());
+					} else {
+						readCommon(itemService, Constant.SHUTTLE_RUN, "ms", "折返跑");
+					}
 					break;
 				case 16:
 					readCommon(itemService, Constant.WALKING1500, "ms", "1500米健步走");
@@ -377,10 +383,14 @@ public class ICInformationActivity extends NFCActivity {
 			} else {
 				icInfo.setProjectTitle(name);
 				String result = "";
-				if (name.contains("立定跳远")) {
-					result = (Double) (itemResult.getResult()[0].getResultVal() / 10.0) + unit;
-				} else if (name.contains("跑") || name.contains("篮球") || name.contains("足球") || name.contains("游泳")) {
+				if (name.contains("跑") || name.contains("篮球") || name.contains("足球") || name.contains("游泳")) {
 					result = getRunTime(itemResult.getResult()[0].getResultVal());
+				} else if (name.contains("坐位体前屈")) {
+					if (itemResult.getResult()[0].getResultVal() == 0) {
+						result = "0" + unit;
+					} else {
+						result = itemResult.getResult()[0].getResultVal() / 10.0 + unit;
+					}
 				} else {
 					result = itemResult.getResult()[0].getResultVal() + unit;
 				}
@@ -515,7 +525,7 @@ public class ICInformationActivity extends NFCActivity {
 				icInfo.setProjectTitle("身高");
 				icInfo.setProjectValue(height / 10 + " 厘米");
 				icInfo1.setProjectTitle("体重");
-				icInfo1.setProjectValue(weight / 1000 + " 千克");
+				icInfo1.setProjectValue(weight / 10 + " 千克");
 				icInfos.add(icInfo);
 				icInfos.add(icInfo1);
 			}
@@ -626,7 +636,7 @@ public class ICInformationActivity extends NFCActivity {
 						} else if (itemName.contains("跳远")) {
 							icInfo.setProjectValue((double) resultInfo.getLastResult() / 10.0 + " 厘米");
 						} else if (itemName.contains("坐位体前屈")) {
-							icInfo.setProjectValue(resultInfo.getLastResult() + " 厘米");
+							icInfo.setProjectValue(resultInfo.getLastResult() / 10.0 + " 厘米");
 						} else if (itemName.contains("俯卧撑")) {
 							icInfo.setProjectValue(resultInfo.getLastResult() + " 个");
 						} else if (itemName.contains("仰卧起坐")) {
@@ -663,7 +673,7 @@ public class ICInformationActivity extends NFCActivity {
 				} else if (wResult.equals("免测")) {
 					wicInfo.setProjectValue("免测");
 				} else {
-					wicInfo.setProjectValue(Double.parseDouble(wResult) / 1000 + " 千克");
+					wicInfo.setProjectValue(Double.parseDouble(wResult) / 10 + " 千克");
 				}
 				icInfos1.add(1, wicInfo);
 			}
@@ -762,7 +772,7 @@ public class ICInformationActivity extends NFCActivity {
 			} else if (itemName.contains("跳远")) {
 				icInfo.setProjectValue((double) hisResultInfo.getLastResult() / 10.0 + " 厘米");
 			} else if (itemName.contains("坐位体前屈")) {
-				icInfo.setProjectValue(hisResultInfo.getLastResult() + " 厘米");
+				icInfo.setProjectValue(hisResultInfo.getLastResult() / 10.0 + " 厘米");
 			} else if (itemName.contains("俯卧撑")) {
 				icInfo.setProjectValue(hisResultInfo.getLastResult() + " 个");
 			} else if (itemName.contains("仰卧起坐")) {
@@ -778,7 +788,7 @@ public class ICInformationActivity extends NFCActivity {
 			} else if (itemName.contains("身高")) {
 				icInfo.setProjectValue(Double.parseDouble(hisResultInfo.getLastResult() + "") / 10 + " 厘米");
 			} else if (itemName.contains("体重")) {
-				icInfo.setProjectValue(Double.parseDouble(hisResultInfo.getLastResult() + "") / 1000 + " 千克");
+				icInfo.setProjectValue(Double.parseDouble(hisResultInfo.getLastResult() + "") / 10 + " 千克");
 			}
 		}
 		return icInfo;

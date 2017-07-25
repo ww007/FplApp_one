@@ -10,6 +10,7 @@ import com.fpl.myapp.base.NFCActivity;
 import com.fpl.myapp.db.DbService;
 import com.fpl.myapp.db.SaveDBUtil;
 import com.fpl.myapp.util.Constant;
+import com.fpl.myapp.util.HttpUtil;
 import com.fpl.myapp.util.NetUtil;
 import com.wnb.android.nfc.dataobject.entity.IC_ItemResult;
 import com.wnb.android.nfc.dataobject.entity.IC_Result;
@@ -131,13 +132,16 @@ public class VolleyballActivity extends NFCActivity {
 			if (itemService.IC_ReadStuInfo().getStuCode().equals(tvNumber.getText().toString())) {
 				IC_Result[] resultVolleyball = new IC_Result[4];
 				String chengji = "";
+				int result1;
 				if (checkedBtn.equals("犯规") || checkedBtn.equals("弃权")) {
 					chengji = "0";
+					result1 = Integer.parseInt(chengji);
+					resultVolleyball[0] = new IC_Result(result1, 0, 0, 0);
 				} else {
 					chengji = etChengji.getText().toString();
+					result1 = Integer.parseInt(chengji);
+					resultVolleyball[0] = new IC_Result(result1, 1, 0, 0);
 				}
-				int result1 = Integer.parseInt(chengji);
-				resultVolleyball[0] = new IC_Result(result1, 1, 0, 0);
 				IC_ItemResult ItemResultVolleyball = new IC_ItemResult(Constant.VOLLEYBALL, 0, 0, resultVolleyball);
 				boolean isVolleyballResult = itemService.IC_WriteItemResult(ItemResultVolleyball);
 				log.info("写入排球成绩=>" + isVolleyballResult + "成绩：" + result1 + "，学生：" + student.toString());
@@ -201,7 +205,7 @@ public class VolleyballActivity extends NFCActivity {
 		tvName = (TextView) findViewById(R.id.tv_name_edit);
 		tvGender = (TextView) findViewById(R.id.tv_gender_edit);
 		tvNumber = (TextView) findViewById(R.id.et_number_edit);
-		btnGetStu=(Button)findViewById(R.id.btn_person_getstus);
+		btnGetStu = (Button) findViewById(R.id.btn_person_getstus);
 		tvShow1 = (TextView) findViewById(R.id.tv_infor_show1);
 		tvShow = (TextView) findViewById(R.id.tv_infor_show);
 		etChengji = (EditText) findViewById(R.id.et_info_chengji);
@@ -335,7 +339,7 @@ public class VolleyballActivity extends NFCActivity {
 			@Override
 			public void onClick(View v) {
 				if (DbService.getInstance(context).loadAllItem().isEmpty()) {
-					Toast.makeText(context, "请先获取项目相关数据", Toast.LENGTH_SHORT).show();
+					Toast.makeText(context, "请先初始化数据", Toast.LENGTH_SHORT).show();
 					return;
 				}
 				if ("".equals(etChengji.getText().toString()) && checkedBtn.equals("正常")) {
@@ -353,21 +357,33 @@ public class VolleyballActivity extends NFCActivity {
 						return;
 					}
 					grade = etChengji.getText().toString();
-					// 查询数据库中保存的该学生项目成绩的轮次
-					String itemCode = DbService.getInstance(context).queryItemByMachineCode(Constant.VOLLEYBALL + "")
-							.getItemCode();
-					// long stuID =
-					// DbService.getInstance(context).queryStudentByCode(tvNumber.getText().toString()).get(0)
-					// .getStudentID();
-					// long itemID =
-					// DbService.getInstance(context).queryItemByCode(itemCode).getItemID();
-					studentItems = DbService.getInstance(context).queryStudentItemByCode(tvNumber.getText().toString(),
-							itemCode);
-					if (studentItems == null) {
-						Toast.makeText(context, "当前学生项目不存在", Toast.LENGTH_SHORT).show();
-						return;
-					} else {
+					List<ww.greendao.dao.Student> students = DbService.getInstance(context)
+							.queryStudentByCode(tvNumber.getText().toString());
+					if (students.isEmpty()) {
+						int currentSex;
+						if (tvGender.getText().toString().equals("男")) {
+							currentSex = 1;
+						} else {
+							currentSex = 2;
+						}
+						ww.greendao.dao.Student currentStu = new ww.greendao.dao.Student(null,
+								tvNumber.getText().toString(), tvName.getText().toString(), currentSex, null, null,
+								null, null, HttpUtil.getCurrentTime(), null, null, null);
+						DbService.getInstance(context).saveStudent(currentStu);
 						resultState = 0;
+					} else {
+						List<StudentItem> stuItems = DbService.getInstance(context)
+								.queryStudentItemBystuCode(tvNumber.getText().toString());
+						String itemCode = DbService.getInstance(context)
+								.queryItemByMachineCode(Constant.VOLLEYBALL + "").getItemCode();
+						studentItems = DbService.getInstance(context)
+								.queryStudentItemByCode(tvNumber.getText().toString(), itemCode);
+						if ((!stuItems.isEmpty()) && studentItems == null) {
+							NetUtil.showToast(context, "当前学生项目不存在");
+							return;
+						} else {
+							resultState = 0;
+						}
 					}
 				}
 				int flag = SaveDBUtil.saveGradesDB(context, tvNumber.getText().toString(), grade, resultState,
@@ -429,8 +445,10 @@ public class VolleyballActivity extends NFCActivity {
 
 			@Override
 			public void afterTextChanged(Editable s) {
-				if (tvNumber.getText().toString().isEmpty()) {
-					tvShow.setVisibility(View.VISIBLE);
+				if (tvNumber.getText().toString().isEmpty() || etChengji.getText().toString().isEmpty()) {
+					if (readStyle != 1) {
+						tvShow.setVisibility(View.VISIBLE);
+					}
 					btnCancel.setVisibility(View.GONE);
 					btnSave.setVisibility(View.GONE);
 				} else {

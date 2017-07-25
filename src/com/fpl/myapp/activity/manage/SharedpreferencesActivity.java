@@ -96,8 +96,8 @@ public class SharedpreferencesActivity extends Activity {
 		m1SharedPreferences = this.getSharedPreferences("ipAddress", Activity.MODE_PRIVATE);
 
 		// SharedPreferences获取保存的上传地址
-		ip = m1SharedPreferences.getString("ip", "0");
-		number = m1SharedPreferences.getString("number", "0");
+		ip = m1SharedPreferences.getString("ip", "");
+		number = m1SharedPreferences.getString("number", "");
 		OnlyNumber = m1SharedPreferences.getInt("macorimei", 0);
 		// 获取IMEI码
 		IMEI = m1SharedPreferences.getString("IMEI", "0");
@@ -118,7 +118,6 @@ public class SharedpreferencesActivity extends Activity {
 				// }
 				try {
 					HttpUtil.getPassword(context, ipAddress, IMEI);
-					// HttpUtil.getState(context, ipAddress);
 				} catch (Exception e) {
 					mHandler.sendEmptyMessage(3);
 					e.printStackTrace();

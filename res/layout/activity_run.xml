@@ -22,12 +22,12 @@
         android:background="#FF909090" />
 
     <TextView
-        android:id="@+id/textView2"
+        android:id="@+id/tv_run_text"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:gravity="center"
-        android:text="00:00.0"
+        android:text="00:00.00"
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:textSize="40sp" />
 

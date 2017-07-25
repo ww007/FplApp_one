@@ -11,9 +11,11 @@ import org.apache.log4j.Logger;
 import com.fpl.myapp2.R;
 import com.alibaba.fastjson.JSON;
 import com.fpl.myapp.activity.SplashScreenActivity;
+import com.fpl.myapp.activity.manage.SharedpreferencesActivity;
 import com.fpl.myapp.db.DbService;
 import com.fpl.myapp.entity.PH_RoundGround;
 import com.fpl.myapp.entity.PH_WHRoundResul;
+import com.fpl.myapp.entity.StateInfo;
 import com.fpl.myapp.ui.ArcProgressBar;
 import com.fpl.myapp.util.Constant;
 import com.fpl.myapp.util.HttpUtil;
@@ -97,6 +99,9 @@ public class OnlineActivity extends Activity {
 				break;
 			case 6:
 				NetUtil.showToast(context, "上传失败");
+				break;
+			case 7:
+				NetUtil.showToast(context, "该设备未开放");
 				break;
 			}
 		}
@@ -307,11 +312,67 @@ public class OnlineActivity extends Activity {
 				return;
 			}
 			time1 = System.currentTimeMillis();
-			postWhRoundResultForPager(context, 0);
+			getState(context);
+			// postWhRoundResultForPager(context, 0);
 		} else {
 			NetUtil.checkNetwork(this);
 		}
 
+	}
+
+	/**
+	 * 获取手持机开放状态
+	 * 
+	 * @param context
+	 * @param ip
+	 * @param iMEI
+	 */
+	private void getState(final Context context) {
+		new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+				Map<String, String> paramMap = new HashMap<>();
+				paramMap.put("mac", MACORIMEI);
+				OkHttpClient mOkHttpClient = new OkHttpClient().newBuilder().connectTimeout(5, TimeUnit.SECONDS)
+						.readTimeout(5, TimeUnit.SECONDS).build();
+				StringBuilder stringBuilder = new StringBuilder();
+				stringBuilder.append("http://" + ip + ":" + number + Constant.GET_STATE)
+						.append("?signature=" + HttpUtil.getSignatureVal(paramMap) + "&mac=" + MACORIMEI);
+				try {
+					Log.i("stringBuilder=", stringBuilder.toString());
+					Request request = new Request.Builder().url(stringBuilder.toString())
+							.post(RequestBody.create(null, "")).build();
+					Call call = mOkHttpClient.newCall(request);
+					call.enqueue(new Callback() {
+
+						@Override
+						public void onResponse(Call arg0, Response response) throws IOException {
+							String stateResult = response.body().string();
+							Log.i("result============", stateResult);
+							List<StateInfo> stateInfo = JSON.parseArray("[" + stateResult + "]", StateInfo.class);
+							if (stateInfo.isEmpty()) {
+								handler.sendEmptyMessage(4);
+							} else {
+								if (stateInfo.get(0).getState().equals("1")) {
+									postWhRoundResultForPager(context, 0);
+								} else {
+									handler.sendEmptyMessage(7);
+								}
+							}
+						}
+
+						@Override
+						public void onFailure(Call arg0, IOException arg1) {
+							handler.sendEmptyMessage(4);
+						}
+					});
+				} catch (Exception e) {
+					handler.sendEmptyMessage(4);
+					e.printStackTrace();
+				}
+			}
+		}).start();
 	}
 
 	private long time1;
@@ -323,6 +384,12 @@ public class OnlineActivity extends Activity {
 	private List<TotalRoundResult> totalRoundResults = new ArrayList<>();
 	private TotalRoundResult totalRoundResult;
 
+	/**
+	 * 分页上传其它项目成绩
+	 * 
+	 * @param context
+	 * @param page
+	 */
 	private void postRoundResultsForPage(final Context context, final int page) {
 		new Thread(new Runnable() {
 
@@ -462,6 +529,12 @@ public class OnlineActivity extends Activity {
 	private List<TotalWhRoundResult> totalWhRoundResults = new ArrayList<>();
 	private TotalWhRoundResult totalWhRoundResul;
 
+	/**
+	 * 分页上传身高体总数据
+	 * 
+	 * @param context
+	 * @param page
+	 */
 	private void postWhRoundResultForPager(final Context context, final int page) {
 		new Thread(new Runnable() {
 

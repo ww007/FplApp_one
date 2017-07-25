@@ -167,9 +167,16 @@ public class RunMeteringActivity extends ListActivity implements OnClickListener
 	 */
 	private void metering() {
 		llTitle.setVisibility(View.VISIBLE);
-		list.add(0, getDeltaT());
+		if (title.contains("50米跑")) {
+			list.add(0, getDeltaT());
+			grade = new RunGrade(i, getDeltaT(), "", "", 0);
+		} else {
+			list.add(0, getDeltaTForMiddleRace());
+			grade = new RunGrade(i, getDeltaTForMiddleRace(), "", "", 0);
+		}
+		// list.add(0, getDeltaT());
 		bd = new Bundle();
-		grade = new RunGrade(i, getDeltaT(), "", "", 0);
+		// grade = new RunGrade(i, getDeltaT(), "", "", 0);
 		grades.add(grade);
 		bd.putSerializable("grades", grades);
 		adapter.notifyDataSetChanged();
@@ -251,12 +258,43 @@ public class RunMeteringActivity extends ListActivity implements OnClickListener
 		return string;
 	}
 
+	public String getDeltaTForMiddleRace() {
+		timeUsedInsec = System.currentTimeMillis() - startTime;
+		min = (int) ((timeUsedInsec) / 60000);
+		sec = (int) ((timeUsedInsec - min * 60000) / 1000);
+		longmill = (int) (timeUsedInsec - min * 60000 - sec * 1000);
+		String string = "";
+		if (longmill < 991 && longmill > 90) {
+			if (longmill % 10 == 0) {
+				string = getMin(0) + ":" + getSec(0);
+			} else {
+				string = getMin(0) + ":" + getSec(0);
+			}
+		} else if (longmill < 91) {
+			if (longmill % 10 == 0) {
+				string = getMin(0) + ":" + getSec(0);
+			} else {
+				string = getMin(0) + ":" + getSec(0);
+			}
+		} else {
+			if (sec < 59) {
+				string = getMin(0) + ":" + getSec(1);
+			} else {
+				string = getMin(1) + ":" + "00";
+			}
+		}
+		// string = getMin() + ":" + getSec();
+		return string;
+	}
+
 	/**
 	 * 更新时间的显示
 	 */
 	private void updateClockUI() {
 		Log.i("time", timeUsedInsec + "");
 		tvTime.setText(getDeltaT());
+		tvTime.setText(getDeltaT());
+
 	}
 
 	public String getMin(int n) {

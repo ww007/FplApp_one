@@ -185,13 +185,17 @@ public class InfraredBallActivity extends NFCActivity {
 			if (itemService.IC_ReadStuInfo().getStuCode().equals(tvNumber.getText().toString())) {
 				IC_Result[] resultInfraredBall = new IC_Result[4];
 				String chengji = "";
+				int result1;
 				if (checkedBtn.equals("犯规") || checkedBtn.equals("弃权")) {
 					chengji = "0";
+					result1 = Integer.parseInt(chengji);
+					resultInfraredBall[0] = new IC_Result(result1, 0, 0, 0);
 				} else {
 					chengji = etChengji.getText().toString();
+					result1 = Integer.parseInt(chengji);
+					resultInfraredBall[0] = new IC_Result(result1, 1, 0, 0);
 				}
-				int result1 = Integer.parseInt(chengji);
-				resultInfraredBall[0] = new IC_Result(result1, 1, 0, 0);
+
 				IC_ItemResult ItemResultInfraredBall = new IC_ItemResult(Constant.INFRARED_BALL, 0, 0,
 						resultInfraredBall);
 				boolean isInfraredBallResult = itemService.IC_WriteItemResult(ItemResultInfraredBall);
@@ -229,11 +233,11 @@ public class InfraredBallActivity extends NFCActivity {
 			tvGender.setText(sex);
 			tvName.setText(student.getStuName().toString());
 			tvNumber.setText(student.getStuCode().toString());
-			
+
 			item = itemService.IC_ReadItemResult(Constant.INFRARED_BALL);
 			String itemResult = "";
 
-			if (item.getResult()[0].getResultVal() == 0) {
+			if (item.getResult()[0].getResultFlag() == 0) {
 				itemResult = "";
 				btnCancel.setVisibility(View.GONE);
 				btnSave.setVisibility(View.GONE);
@@ -242,7 +246,7 @@ public class InfraredBallActivity extends NFCActivity {
 				btnCancel.setVisibility(View.VISIBLE);
 				btnSave.setVisibility(View.VISIBLE);
 			}
-			
+
 			etChengji.setText(itemResult);
 			etChengji.setSelection(etChengji.getText().length());
 			tvShow1.setVisibility(View.GONE);

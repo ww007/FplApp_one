@@ -183,13 +183,17 @@ public class RopeSkippingActivity extends NFCActivity {
 			if (itemService.IC_ReadStuInfo().getStuCode().equals(tvNumber.getText().toString())) {
 				IC_Result[] resultRopeSkipping = new IC_Result[4];
 				String chengji = "";
+				int result1;
 				if (checkedBtn.equals("犯规") || checkedBtn.equals("弃权")) {
 					chengji = "0";
+					result1 = Integer.parseInt(chengji);
+					resultRopeSkipping[0] = new IC_Result(result1, 0, 0, 0);
 				} else {
 					chengji = etChengji.getText().toString();
+					result1 = Integer.parseInt(chengji);
+					resultRopeSkipping[0] = new IC_Result(result1, 1, 0, 0);
 				}
-				int result1 = Integer.parseInt(chengji);
-				resultRopeSkipping[0] = new IC_Result(result1, 1, 0, 0);
+
 				IC_ItemResult ItemResultRopeSkipping = new IC_ItemResult(Constant.ROPE_SKIPPING, 0, 0,
 						resultRopeSkipping);
 				boolean isRopeSkippingResult = itemService.IC_WriteItemResult(ItemResultRopeSkipping);
@@ -218,7 +222,7 @@ public class RopeSkippingActivity extends NFCActivity {
 			IItemService itemService = new NFCItemServiceImpl(intent);
 			student = itemService.IC_ReadStuInfo();
 			log.info("跳绳读卡=>" + student.toString());
-			
+
 			if (1 == student.getSex()) {
 				sex = "男";
 			} else {
@@ -231,7 +235,7 @@ public class RopeSkippingActivity extends NFCActivity {
 			item = itemService.IC_ReadItemResult(Constant.ROPE_SKIPPING);
 			String itemResult = "";
 
-			if (item.getResult()[0].getResultVal() == 0) {
+			if (item.getResult()[0].getResultFlag() == 0) {
 				itemResult = "";
 				btnCancel.setVisibility(View.GONE);
 				btnSave.setVisibility(View.GONE);
@@ -241,11 +245,16 @@ public class RopeSkippingActivity extends NFCActivity {
 				btnSave.setVisibility(View.VISIBLE);
 			}
 
+			etChengji.setEnabled(true);
+			rb0.setChecked(true);
+			rb0.setEnabled(true);
+			rb1.setEnabled(true);
+			rb2.setEnabled(true);
+			rb3.setEnabled(true);
+			etChengji.requestFocus();
 			etChengji.setText(itemResult);
 			etChengji.setSelection(etChengji.getText().length());
 			tvShow1.setVisibility(View.GONE);
-			etChengji.setEnabled(true);
-			rb0.setChecked(true);
 			tvShow.setText("请输入成绩");
 			tvShow.setVisibility(View.VISIBLE);
 

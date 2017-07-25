@@ -297,7 +297,12 @@ public class RunGradeInputActivity extends NFCActivity {
 				// chengji = getChengJi() + "";
 				// }
 				int result1 = chengji;
-				resultRun[0] = new IC_Result(result1, 1, 0, 0);
+				Log.i("result1===============", result1+"");
+				if (result1 > 0) {
+					resultRun[0] = new IC_Result(result1, 1, 0, 0);
+				} else {
+					resultRun[0] = new IC_Result(result1, 0, 0, 0);
+				}
 				IC_ItemResult ItemResultRun = new IC_ItemResult(constant, 0, 0, resultRun);
 				boolean isRunResult = itemService.IC_WriteItemResult(ItemResultRun);
 				log.info("写入跑步成绩=>" + isRunResult + "成绩：" + result1 + "，学生：" + tvNumber.getText().toString());
@@ -341,7 +346,7 @@ public class RunGradeInputActivity extends NFCActivity {
 
 			int itemResult;
 
-			if (item.getResult()[0].getResultVal() == 0) {
+			if (item.getResult()[0].getResultFlag() == 0) {
 				itemResult = 0;
 				btnCancel.setVisibility(View.GONE);
 				btnSave.setVisibility(View.GONE);
@@ -461,6 +466,13 @@ public class RunGradeInputActivity extends NFCActivity {
 		if (title.equals("50米跑")) {
 			etSec.setVisibility(View.GONE);
 			tvSec.setVisibility(View.GONE);
+			etS.setFocusable(true);
+			etS.requestFocus();
+		} else {
+			etMs.setVisibility(View.GONE);
+			tvMs.setVisibility(View.GONE);
+			etSec.setFocusable(true);
+			etSec.requestFocus();
 		}
 
 		// if (readStyle == 1) {
@@ -710,7 +722,7 @@ public class RunGradeInputActivity extends NFCActivity {
 			}
 		});
 
-		etMs.addTextChangedListener(new TextWatcher() {
+		etS.addTextChangedListener(new TextWatcher() {
 			@Override
 			public void onTextChanged(CharSequence s, int start, int before, int count) {
 				// TODO Auto-generated method stub
@@ -725,7 +737,7 @@ public class RunGradeInputActivity extends NFCActivity {
 
 			@Override
 			public void afterTextChanged(Editable s) {
-				if (tvNumber.getText().toString().isEmpty() || etMs.getText().toString().isEmpty()) {
+				if (tvNumber.getText().toString().isEmpty() || etS.getText().toString().isEmpty()) {
 					if (readStyle != 1) {
 						tvShow.setVisibility(View.VISIBLE);
 					}
@@ -754,10 +766,13 @@ public class RunGradeInputActivity extends NFCActivity {
 				// } else
 				if (checkedBtn.equals("犯规")) {
 					resultState = -1;
+					chengji=0;
 				} else if (checkedBtn.equals("中退")) {
 					resultState = -2;
+					chengji=0;
 				} else if (checkedBtn.equals("弃权")) {
 					resultState = -3;
+					chengji=0;
 				} else if (checkedBtn.equals("正常")) {
 					chengji = getChengJi();
 					if (Integer.parseInt(getS()) > 59) {

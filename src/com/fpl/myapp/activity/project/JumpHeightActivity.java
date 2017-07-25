@@ -25,6 +25,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.Editable;
+import android.text.InputType;
 import android.text.TextWatcher;
 import android.view.KeyEvent;
 import android.view.View;
@@ -181,13 +182,17 @@ public class JumpHeightActivity extends NFCActivity {
 			if (itemService.IC_ReadStuInfo().getStuCode().equals(tvNumber.getText().toString())) {
 				IC_Result[] resultJumpHeight = new IC_Result[4];
 				String chengji = "";
+				int result1;
 				if (checkedBtn.equals("犯规") || checkedBtn.equals("免跳") || checkedBtn.equals("退出")) {
 					chengji = "0";
+					result1 = Integer.parseInt(chengji);
+					resultJumpHeight[0] = new IC_Result(result1, 0, 0, 0);
 				} else {
 					chengji = etChengji.getText().toString();
+					result1 = Integer.parseInt(chengji);
+					resultJumpHeight[0] = new IC_Result(result1, 1, 0, 0);
 				}
-				int result1 = Integer.parseInt(chengji);
-				resultJumpHeight[0] = new IC_Result(result1, 1, 0, 0);
+
 				IC_ItemResult ItemResultJumpHeight = new IC_ItemResult(Constant.JUMP_HEIGHT, 0, 0, resultJumpHeight);
 				boolean isJumpHeightResult = itemService.IC_WriteItemResult(ItemResultJumpHeight);
 				log.info("写入摸高成绩=>" + isJumpHeightResult + "成绩：" + result1 + "，学生：" + student.toString());
@@ -214,7 +219,7 @@ public class JumpHeightActivity extends NFCActivity {
 			IItemService itemService = new NFCItemServiceImpl(intent);
 			student = itemService.IC_ReadStuInfo();
 			log.info("摸高读卡=>" + student.toString());
-			
+
 			if (1 == student.getSex()) {
 				sex = "男";
 			} else {
@@ -227,7 +232,7 @@ public class JumpHeightActivity extends NFCActivity {
 			item = itemService.IC_ReadItemResult(Constant.JUMP_HEIGHT);
 			String itemResult = "";
 
-			if (item.getResult()[0].getResultVal() == 0) {
+			if (item.getResult()[0].getResultFlag() == 0) {
 				itemResult = "";
 				btnCancel.setVisibility(View.GONE);
 				btnSave.setVisibility(View.GONE);
@@ -237,12 +242,16 @@ public class JumpHeightActivity extends NFCActivity {
 				btnSave.setVisibility(View.VISIBLE);
 			}
 
-			
-			etChengji.setText(itemResult);
-			etChengji.setSelection(etChengji.getText().length());
-			tvShow1.setVisibility(View.GONE);
 			etChengji.setEnabled(true);
 			rb0.setChecked(true);
+			rb0.setEnabled(true);
+			rb1.setEnabled(true);
+			rb2.setEnabled(true);
+			rb3.setEnabled(true);
+			etChengji.setText(itemResult);
+			etChengji.requestFocus();
+			etChengji.setSelection(etChengji.getText().length());
+			tvShow1.setVisibility(View.GONE);
 			tvShow.setText("请输入成绩");
 			tvShow.setVisibility(View.VISIBLE);
 
@@ -290,6 +299,7 @@ public class JumpHeightActivity extends NFCActivity {
 		rb2.setVisibility(View.GONE);
 		rb3.setText("弃权");
 		etChengji.setEnabled(false);
+		etChengji.setInputType(InputType.TYPE_CLASS_NUMBER);
 
 		tvInfoTitle.setText("摸高");
 		tvInfoChengji.setText("摸高");
@@ -392,7 +402,7 @@ public class JumpHeightActivity extends NFCActivity {
 				}
 			}
 		});
-		
+
 		btnScan.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {

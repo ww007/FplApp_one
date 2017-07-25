@@ -24,7 +24,10 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.Settings.System;
+import android.renderscript.Type;
 import android.text.Editable;
+import android.text.InputType;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -185,13 +188,16 @@ public class BroadJumpActivity extends NFCActivity {
 			if (itemService.IC_ReadStuInfo().getStuCode().equals(tvNumber.getText().toString())) {
 				String chengji = "";
 				IC_Result[] resultBroadJump = new IC_Result[4];
+				int result1;
 				if (checkedBtn.equals("犯规") || checkedBtn.equals("免跳") || checkedBtn.equals("退出")) {
 					chengji = "0";
+					result1 = Integer.parseInt(chengji);
+					resultBroadJump[0] = new IC_Result(result1, 0, 0, 0);
 				} else {
 					chengji = etChengji.getText().toString();
+					result1 = Integer.parseInt(chengji);
+					resultBroadJump[0] = new IC_Result(result1, 1, 0, 0);
 				}
-				int result1 = (int) (Double.parseDouble(chengji) * 10);
-				resultBroadJump[0] = new IC_Result(result1, 1, 0, 0);
 				IC_ItemResult ItemResultBroadJump = new IC_ItemResult(Constant.BROAD_JUMP, 0, 0, resultBroadJump);
 				boolean isBroadJumpResult = itemService.IC_WriteItemResult(ItemResultBroadJump);
 				log.info("写入立定跳远成绩=>" + isBroadJumpResult + "成绩：" + result1 + "，学生：" + student.toString());
@@ -220,7 +226,7 @@ public class BroadJumpActivity extends NFCActivity {
 			IItemService itemService = new NFCItemServiceImpl(intent);
 			student = itemService.IC_ReadStuInfo();
 			log.info("立定跳远读卡->" + student.toString());
-			
+
 			if (1 == student.getSex()) {
 				sex = "男";
 			} else {
@@ -229,27 +235,30 @@ public class BroadJumpActivity extends NFCActivity {
 			tvGender.setText(sex);
 			tvName.setText(student.getStuName().toString());
 			tvNumber.setText(student.getStuCode().toString());
-			
+
 			item = itemService.IC_ReadItemResult(Constant.BROAD_JUMP);
 			String itemResult = "";
-			Log.i("item", item.getResult()[0].toString());
-			
 
-			if (item.getResult()[0].getResultVal() == 0) {
+			if (item.getResult()[0].getResultFlag() == 0) {
 				itemResult = "";
 				btnCancel.setVisibility(View.GONE);
 				btnSave.setVisibility(View.GONE);
 			} else {
-				itemResult = item.getResult()[0].getResultVal() / 10.0 + "";
+				itemResult = item.getResult()[0].getResultVal() + "";
 				btnCancel.setVisibility(View.VISIBLE);
 				btnSave.setVisibility(View.VISIBLE);
 			}
 
+			rb0.setChecked(true);
+			rb0.setEnabled(true);
+			rb1.setEnabled(true);
+			rb2.setEnabled(true);
+			rb3.setEnabled(true);
+			etChengji.setEnabled(true);
 			etChengji.setText(itemResult);
+			etChengji.requestFocus();
 			etChengji.setSelection(etChengji.getText().length());
 			tvShow1.setVisibility(View.GONE);
-			etChengji.setEnabled(true);
-			rb0.setChecked(true);
 			tvShow.setText("请输入成绩");
 			tvShow.setVisibility(View.VISIBLE);
 			// if (DbService.getInstance(context).loadAllItem().isEmpty()
@@ -310,6 +319,7 @@ public class BroadJumpActivity extends NFCActivity {
 		rb1 = (RadioButton) findViewById(R.id.radio1);
 		rb2 = (RadioButton) findViewById(R.id.radio2);
 		rb3 = (RadioButton) findViewById(R.id.radio3);
+		etChengji.setInputType(InputType.TYPE_CLASS_NUMBER);
 
 		tvInfoTitle.setText("立定跳远");
 		tvInfoChengji.setText("立定跳远");
@@ -540,7 +550,7 @@ public class BroadJumpActivity extends NFCActivity {
 						studentItems = DbService.getInstance(context)
 								.queryStudentItemByCode(tvNumber.getText().toString(), itemCode);
 						if ((!stuItems.isEmpty()) && studentItems == null) {
-							Toast.makeText(context, "当前学生项目不存在", Toast.LENGTH_SHORT).show();
+							NetUtil.showToast(context, "当前学生项目不存在");
 							return;
 						} else {
 							resultState = 0;
@@ -549,9 +559,8 @@ public class BroadJumpActivity extends NFCActivity {
 
 				}
 
-				Log.i("grade", Double.parseDouble(grade) * 10 + "");
-				int flag = SaveDBUtil.saveGradesDB(context, tvNumber.getText().toString(),
-						(int) (Double.parseDouble(grade) * 10) + "", resultState, Constant.BROAD_JUMP + "", "立定跳远");
+				int flag = SaveDBUtil.saveGradesDB(context, tvNumber.getText().toString(), Integer.parseInt(grade)*10 + "",
+						resultState, Constant.BROAD_JUMP + "", "立定跳远");
 
 				btnCancel.setVisibility(View.GONE);
 				btnSave.setVisibility(View.GONE);

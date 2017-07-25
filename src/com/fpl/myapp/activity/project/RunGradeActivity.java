@@ -192,10 +192,17 @@ public class RunGradeActivity extends NFCActivity {
 		default:
 			break;
 		}
+
 		String time = runGrades.get(currentPosition).getTime();
-		int result1 = Integer.parseInt(time.subSequence(0, 2).toString()) * 60 * 1000
-				+ Integer.parseInt(time.subSequence(3, 5).toString()) * 1000
-				+ Integer.parseInt(time.substring(6, 8).toString())*10;
+		int result1;
+		if (title.contains("50米跑")) {
+			result1 = Integer.parseInt(time.subSequence(0, 2).toString()) * 60 * 1000
+					+ Integer.parseInt(time.subSequence(3, 5).toString()) * 1000
+					+ Integer.parseInt(time.substring(6, 8).toString()) * 10;
+		} else {
+			result1 = Integer.parseInt(time.subSequence(0, 2).toString()) * 60 * 1000
+					+ Integer.parseInt(time.subSequence(3, 5).toString()) * 1000;
+		}
 		IC_Result[] result = new IC_Result[4];
 		result[0] = new IC_Result(result1, 1, 0, 0);// 成绩1
 		IC_ItemResult ItemResult = new IC_ItemResult(code, 0, 0, result);
@@ -208,7 +215,11 @@ public class RunGradeActivity extends NFCActivity {
 		currentName = student.getStuName();
 		log.info("当前读卡位置=>" + lvGrade.getFirstVisiblePosition() + "=>" + student.toString());
 		updateView(currentPosition, student);
+		if (lvGrade.getLastVisiblePosition() == currentPosition+1) {
+			lvGrade.setSelection(lvGrade.getFirstVisiblePosition() + 6);
+		}
 		currentPosition++;
+		lvGrade.getLastVisiblePosition();
 		adapter.setSelectItem(currentPosition);
 		adapter.notifyDataSetInvalidated();
 	}
@@ -266,10 +277,12 @@ public class RunGradeActivity extends NFCActivity {
 							@Override
 							public void onClick(DialogInterface dialog, int which) {
 								datas = ChengjiAdapter.datas;
-//								if (DbService.getInstance(context).getStudentItemsCount() == 0) {
-//									NetUtil.showToast(context, "相关数据未下载，不能保存");
-//									return;
-//								}
+								// if
+								// (DbService.getInstance(context).getStudentItemsCount()
+								// == 0) {
+								// NetUtil.showToast(context, "相关数据未下载，不能保存");
+								// return;
+								// }
 								if (title.equals("50米跑")) {
 									for (RunGrade runGrade : datas) {
 										if (!runGrade.getName().isEmpty()) {
@@ -277,7 +290,8 @@ public class RunGradeActivity extends NFCActivity {
 													runGrade.getTime().subSequence(0, 2).toString()) * 60 * 1000
 													+ Integer.parseInt(runGrade.getTime().subSequence(3, 5).toString())
 															* 1000
-													+ Integer.parseInt(runGrade.getTime().substring(6, 8).toString())*10;
+													+ Integer.parseInt(runGrade.getTime().substring(6, 8).toString())
+															* 10;
 											SaveDBUtil.saveGradesDB(context, runGrade.getStuCode(), result + "", 0,
 													Constant.RUN50 + "", "50米跑");
 										}
@@ -289,8 +303,7 @@ public class RunGradeActivity extends NFCActivity {
 											int result = Integer.parseInt(
 													runGrade.getTime().subSequence(0, 2).toString()) * 60 * 1000
 													+ Integer.parseInt(runGrade.getTime().subSequence(3, 5).toString())
-															* 1000
-													+ Integer.parseInt(runGrade.getTime().substring(6, 8).toString())*10;
+															* 1000;
 											String proName = null;
 											if (runGrade.getSex() == 1) {
 												proName = "1000米跑";
@@ -307,8 +320,7 @@ public class RunGradeActivity extends NFCActivity {
 											int result = Integer.parseInt(
 													runGrade.getTime().subSequence(0, 2).toString()) * 60 * 1000
 													+ Integer.parseInt(runGrade.getTime().subSequence(3, 5).toString())
-															* 1000
-													+ Integer.parseInt(runGrade.getTime().substring(6, 8).toString())*10;
+															* 1000;
 											SaveDBUtil.saveGradesDB(context, runGrade.getStuCode(), result + "", 0,
 													Constant.SHUTTLE_RUN + "", "50米x8往返跑");
 										}

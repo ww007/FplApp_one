@@ -25,7 +25,9 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.Editable;
+import android.text.InputType;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -182,13 +184,16 @@ public class SitAndReachActivity extends NFCActivity {
 			if (itemService.IC_ReadStuInfo().getStuCode().equals(tvNumber.getText().toString())) {
 				IC_Result[] resultSitReach = new IC_Result[4];
 				String chengji = "";
+				int result1;
 				if (checkedBtn.equals("犯规") || checkedBtn.equals("弃权")) {
 					chengji = "-9999";
+					result1 = (int) (Double.parseDouble(chengji) * 10);
+					resultSitReach[0] = new IC_Result(result1, 0, 0, 0);
 				} else {
 					chengji = etChengji.getText().toString();
+					result1 = (int) (Double.parseDouble(chengji) * 10);
+					resultSitReach[0] = new IC_Result(result1, 1, 0, 0);
 				}
-				int result1 = Integer.parseInt(chengji);
-				resultSitReach[0] = new IC_Result(result1, 1, 0, 0);
 				IC_ItemResult ItemResultSitReach = new IC_ItemResult(Constant.SIT_AND_REACH, 0, 0, resultSitReach);
 				boolean isSitReachResult = itemService.IC_WriteItemResult(ItemResultSitReach);
 				log.info("写入坐位体前屈成绩=>" + isSitReachResult + "成绩：" + result1 + "，学生：" + student.toString());
@@ -216,7 +221,7 @@ public class SitAndReachActivity extends NFCActivity {
 			IItemService itemService = new NFCItemServiceImpl(intent);
 			student = itemService.IC_ReadStuInfo();
 			log.info("坐位体前屈读卡=>" + student.toString());
-			
+
 			if (1 == student.getSex()) {
 				sex = "男";
 			} else {
@@ -228,22 +233,41 @@ public class SitAndReachActivity extends NFCActivity {
 
 			item = itemService.IC_ReadItemResult(Constant.SIT_AND_REACH);
 			String itemResult = "";
+			Log.i("item", item.toString());
 
-			if (item.getResult()[0].getResultVal() == 0) {
+			if (item.getResult()[0].getResultFlag() == 0) {
 				itemResult = "";
 				btnCancel.setVisibility(View.GONE);
 				btnSave.setVisibility(View.GONE);
 			} else {
-				itemResult = item.getResult()[0].getResultVal() + "";
+				if (item.getResult()[0].getResultVal() == 0) {
+					itemResult = "0";
+				} else {
+					itemResult = item.getResult()[0].getResultVal() / 10.0 + "";
+				}
 				btnCancel.setVisibility(View.VISIBLE);
 				btnSave.setVisibility(View.VISIBLE);
 			}
+			// if (item.getResult()[0].getResultVal() == 0) {
+			// itemResult = "";
+			// btnCancel.setVisibility(View.GONE);
+			// btnSave.setVisibility(View.GONE);
+			// } else {
+			// itemResult = item.getResult()[0].getResultVal() / 10.0 + "";
+			// btnCancel.setVisibility(View.VISIBLE);
+			// btnSave.setVisibility(View.VISIBLE);
+			// }
 
+			etChengji.setEnabled(true);
+			rb0.setChecked(true);
+			rb0.setEnabled(true);
+			rb1.setEnabled(true);
+			rb2.setEnabled(true);
+			rb3.setEnabled(true);
+			etChengji.requestFocus();
 			etChengji.setText(itemResult);
 			etChengji.setSelection(etChengji.getText().length());
 			tvShow1.setVisibility(View.GONE);
-			etChengji.setEnabled(true);
-			rb0.setChecked(true);
 			tvShow.setText("请输入成绩");
 			tvShow.setVisibility(View.VISIBLE);
 
@@ -461,7 +485,7 @@ public class SitAndReachActivity extends NFCActivity {
 			@Override
 			public void onClick(View v) {
 				if (DbService.getInstance(context).loadAllItem().isEmpty()) {
-					Toast.makeText(context, "请先获取项目相关数据", Toast.LENGTH_SHORT).show();
+					Toast.makeText(context, "请先初始化数据", Toast.LENGTH_SHORT).show();
 					return;
 				}
 				if ("".equals(etChengji.getText().toString()) && checkedBtn.equals("正常")) {
@@ -502,15 +526,15 @@ public class SitAndReachActivity extends NFCActivity {
 						studentItems = DbService.getInstance(context)
 								.queryStudentItemByCode(tvNumber.getText().toString(), itemCode);
 						if ((!stuItems.isEmpty()) && studentItems == null) {
-							Toast.makeText(context, "当前学生项目不存在", Toast.LENGTH_SHORT).show();
+							NetUtil.showToast(context, "当前学生项目不存在");
 							return;
 						} else {
 							resultState = 0;
 						}
 					}
 				}
-				int flag = SaveDBUtil.saveGradesDB(context, tvNumber.getText().toString(), grade, resultState,
-						Constant.SIT_AND_REACH + "", "坐位体前屈");
+				int flag = SaveDBUtil.saveGradesDB(context, tvNumber.getText().toString(),
+						(int) (Double.parseDouble(grade) * 10) + "", resultState, Constant.SIT_AND_REACH + "", "坐位体前屈");
 
 				btnCancel.setVisibility(View.GONE);
 				btnSave.setVisibility(View.GONE);
